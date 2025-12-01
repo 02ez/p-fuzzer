@@ -1,0 +1,55 @@
+# QUICK FIX FOR l6_report_generator.py
+# Apply this patch to fix the KeyError: 'technique' issue
+
+## LOCATION: In the generate_attack_chains() method, find these two sections:
+
+### SECTION 1 - Step 3 of AC-001 (around line 350-360)
+FIND THIS:
+                    {
+                        "step": 3,
+                        "action": "Gained admin panel access with full system privileges",
+                        "time": "3 minutes",
+                        "impact": "Complete system compromise"
+                    },
+
+REPLACE WITH:
+                    {
+                        "step": 3,
+                        "action": "Gained admin panel access with full system privileges",
+                        "time": "3 minutes",
+                        "technique": "Authentication bypass"
+                    },
+
+
+### SECTION 2 - Step 4 of AC-001 (around line 360-370)
+FIND THIS:
+                    {
+                        "step": 4,
+                        "action": "Located unprotected backup file in /backup/config.bak",
+                        "time": "5 minutes",
+                        "impact": "Database credentials exposed"
+                    }
+
+REPLACE WITH:
+                    {
+                        "step": 4,
+                        "action": "Located unprotected backup file in /backup/config.bak",
+                        "time": "5 minutes",
+                        "technique": "Credential enumeration"
+                    }
+
+
+---
+
+ALTERNATIVELY: Use Find & Replace in your editor:
+
+Find: "impact": "Complete system compromise"
+Replace: "technique": "Authentication bypass"
+
+Find: "impact": "Database credentials exposed"
+Replace: "technique": "Credential enumeration"
+
+---
+
+After applying the fix, run:
+python l6_report_generator.py

@@ -1,0 +1,127 @@
+# LabLeakFinder - `.gitignore` Configuration
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Testing
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Environments
+.env
+.env.local
+.env.*.local
+*.envrc
+
+# Reports & Logs
+*.log
+*.log.*
+labfinder_l6_detailed.log
+
+# Output Files
+reports/
+output/
+*.html
+penetration_test_report.json
+vulnerability_summary.csv
+poc_demonstrations.md
+final_penetration_test_report.html
+
+# Credentials & Sensitive
+credentials.json
+config.local.json
+secrets.json
+.credentials
+private_key*
+*.pem
+*.key
+
+# OS Files
+Thumbs.db
+.DS_Store
+.AppleDouble
+.LSOverride
+*.tmp
+*.bak
+*.swp
+
+# Package Files
+*.tar.gz
+*.zip
+*.rar
+
+# Documentation Build
+docs/_build/
+site/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary
+tmp/
+temp/
+*.temp
+
+# Virtual Environments
+.venv/
+env.bak/
+venv.bak/
+
+# Keep Important Files
+!README.md
+!FEATURES.md
+!INSTALLATION.md
+!FAQ.md
+!CONTRIBUTING.md
+!INDEX.md
+!requirements.txt
+!.gitignore

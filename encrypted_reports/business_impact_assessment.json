@@ -1,0 +1,44 @@
+{
+  "report_generated": "2025-11-30T16:10:58.284648",
+  "executive_summary": {
+    "overall_risk_rating": "CRITICAL",
+    "likelihood_of_occurrence": "High (multiple exploitable vulnerabilities present)",
+    "impact_if_exploited": "Catastrophic - Full infrastructure compromise",
+    "estimated_financial_loss": "$89,529,300"
+  },
+  "financial_impact": {
+    "data_breach_notification": 74049300,
+    "operational_downtime": 480000,
+    "regulatory_fines": 5000000,
+    "reputational_damage": 10000000.0,
+    "total_loss": 89529300.0
+  },
+  "operational_impact": {
+    "systems_compromised": 3,
+    "records_exposed": 493662,
+    "time_to_detect": "3-6 months (industry average)",
+    "recovery_timeline": "6-12 months",
+    "business_continuity": "Complete disruption of core services"
+  },
+  "compliance_impact": {
+    "regulations_violated": [
+      "GDPR",
+      "CCPA",
+      "HIPAA",
+      "PCI-DSS"
+    ],
+    "notification_requirements": "Notify 493,662 individuals",
+    "regulatory_exposure": "$5,000,000",
+    "board_notification": "Required - within 4 weeks of discovery"
+  },
+  "recommendations": [
+    "IMMEDIATE: Implement network segmentation to prevent lateral movement",
+    "IMMEDIATE: Disable exposed admin accounts and rotate all credentials",
+    "URGENT: Deploy endpoint detection and response (EDR) solution",
+    "URGENT: Implement WAF to block exploitation attempts",
+    "Priority 1: Patch all identified vulnerabilities within 48 hours",
+    "Priority 1: Deploy DLP solution to prevent data exfiltration",
+    "Priority 2: Implement MFA on all administrative accounts",
+    "Priority 2: Deploy SIEM for centralized monitoring"
+  ]
+}

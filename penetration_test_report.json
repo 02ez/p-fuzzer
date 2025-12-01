@@ -1,0 +1,172 @@
+{
+  "report_generated": "2025-11-30T16:45:22.047572",
+  "executive_summary": {
+    "overall_risk_rating": "CRITICAL",
+    "total_vulnerabilities": 10,
+    "critical_vulnerabilities": 3,
+    "high_vulnerabilities": 5,
+    "financial_impact": 89529300,
+    "systems_compromised": 3,
+    "records_exposed": 493662,
+    "recommendation": "Immediate action required to remediate CRITICAL vulnerabilities within 48 hours.",
+    "executive_statement": "The penetration test identified CRITICAL security vulnerabilities that allow complete compromise of the organization's infrastructure."
+  },
+  "detailed_findings": [
+    {
+      "finding_id": "F-001",
+      "title": "SQL Injection in Login Form",
+      "severity": "CRITICAL",
+      "cvss_score": "10.0",
+      "description": "The login form accepts user input without proper validation.",
+      "root_cause": "User-supplied input directly concatenated into SQL queries.",
+      "proof_of_concept": "admin' OR '1'='1",
+      "remediation": [
+        "Implement parameterized queries",
+        "Use ORM frameworks"
+      ]
+    },
+    {
+      "finding_id": "F-002",
+      "title": "Weak Authentication",
+      "severity": "CRITICAL",
+      "cvss_score": "9.6",
+      "description": "Administrative interfaces accept default credentials.",
+      "root_cause": "Default credentials never changed.",
+      "proof_of_concept": "admin/password",
+      "remediation": [
+        "Change all default credentials",
+        "Enable MFA"
+      ]
+    },
+    {
+      "finding_id": "F-003",
+      "title": "Unprotected Configuration Backup",
+      "severity": "CRITICAL",
+      "cvss_score": "9.0",
+      "description": "Sensitive config file publicly accessible.",
+      "root_cause": "Backup file stored in web root.",
+      "proof_of_concept": "HTTP GET /backup/config.bak",
+      "remediation": [
+        "Move backup files outside web root",
+        "Encrypt sensitive data"
+      ]
+    }
+  ],
+  "attack_chains": [
+    {
+      "chain_id": "AC-001",
+      "name": "Default Credentials Attack Chain",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Discovered admin panel",
+          "time": "0 minutes",
+          "technique": "Information gathering"
+        },
+        {
+          "step": 2,
+          "action": "Tested default credentials",
+          "time": "2 minutes",
+          "technique": "Weak authentication"
+        },
+        {
+          "step": 3,
+          "action": "Gained admin access",
+          "time": "3 minutes",
+          "technique": "Authentication bypass"
+        },
+        {
+          "step": 4,
+          "action": "Found backup file",
+          "time": "5 minutes",
+          "technique": "Credential enumeration"
+        }
+      ],
+      "total_time_to_compromise": "5 minutes"
+    },
+    {
+      "chain_id": "AC-002",
+      "name": "SQL Injection Attack Chain",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Identified SQL injection",
+          "time": "0 minutes",
+          "technique": "Web application testing"
+        },
+        {
+          "step": 2,
+          "action": "Exploited SQL injection",
+          "time": "2 minutes",
+          "technique": "SQL injection exploitation"
+        },
+        {
+          "step": 3,
+          "action": "Extracted credentials",
+          "time": "5 minutes",
+          "technique": "Database query manipulation"
+        },
+        {
+          "step": 4,
+          "action": "Accessed database server",
+          "time": "8 minutes",
+          "technique": "Lateral movement"
+        },
+        {
+          "step": 5,
+          "action": "Established persistence",
+          "time": "12 minutes",
+          "technique": "Persistence establishment"
+        }
+      ],
+      "total_time_to_compromise": "12 minutes"
+    }
+  ],
+  "remediation_roadmap": {
+    "total_findings": 10,
+    "estimated_remediation_cost": 125000,
+    "timeline_phases": [
+      {
+        "phase": "IMMEDIATE (0-7 days)",
+        "priority": "CRITICAL",
+        "description": "Address CRITICAL vulnerabilities",
+        "actions": [
+          "Rotate admin credentials",
+          "Apply input validation",
+          "Move config files",
+          "Enable MFA"
+        ],
+        "estimated_cost": "$35,000",
+        "estimated_effort": "40 hours"
+      },
+      {
+        "phase": "URGENT (7-30 days)",
+        "priority": "HIGH",
+        "description": "Address HIGH severity findings",
+        "actions": [
+          "Patch vulnerabilities",
+          "Network segmentation",
+          "Deploy IDS/IPS"
+        ],
+        "estimated_cost": "$45,000",
+        "estimated_effort": "60 hours"
+      }
+    ]
+  },
+  "risk_dashboard": {
+    "before_remediation": {
+      "overall_risk_score": 95,
+      "risk_rating": "CRITICAL",
+      "estimated_annual_loss": 89529300
+    },
+    "after_remediation_projected": {
+      "overall_risk_score": 35,
+      "risk_rating": "MEDIUM",
+      "estimated_annual_loss": 500000
+    },
+    "risk_reduction_metrics": {
+      "risk_score_reduction": "63%",
+      "financial_impact_reduction": "99.4%"
+    }
+  }
+}

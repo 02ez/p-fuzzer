@@ -1,0 +1,68 @@
+{
+  "total_patterns": 7,
+  "patterns": [
+    {
+      "pattern": "site:{target} intitle:\"Index of\"",
+      "description": "Directory listing exposed via web indexing",
+      "exposure_type": "directory_listing",
+      "severity": "high",
+      "enabled": true,
+      "search_engine": "google",
+      "notes": "Indicates web server misconfiguration allowing directory traversal"
+    },
+    {
+      "pattern": "site:{target} filetype:bak OR filetype:backup OR filetype:old",
+      "description": "Backup files left accessible on web server",
+      "exposure_type": "backup_file",
+      "severity": "critical",
+      "enabled": true,
+      "search_engine": "google",
+      "notes": "Often contains credentials or sensitive source code"
+    },
+    {
+      "pattern": "site:{target} filetype:conf OR filetype:config",
+      "description": "Configuration files exposed in web root",
+      "exposure_type": "config_file",
+      "severity": "critical",
+      "enabled": true,
+      "search_engine": "google",
+      "notes": "May contain database credentials, API keys, secret keys"
+    },
+    {
+      "pattern": "site:{target} inurl:/admin OR inurl:/administrator OR inurl:/wp-admin",
+      "description": "Administrative interfaces discoverable via search engines",
+      "exposure_type": "admin_panel",
+      "severity": "high",
+      "enabled": true,
+      "search_engine": "google",
+      "notes": "Should be behind authentication; discoverable admin panel suggests weak security"
+    },
+    {
+      "pattern": "site:{target} \"debug\" OR \"stack trace\" OR \"exception\"",
+      "description": "Debug information disclosed in error messages",
+      "exposure_type": "debug_info",
+      "severity": "medium",
+      "enabled": true,
+      "search_engine": "google",
+      "notes": "Reveals internal application structure and potential vulnerabilities"
+    },
+    {
+      "pattern": "site:{target} \"api_key\" OR \"secret_key\" OR \"password\" OR \"token\"",
+      "description": "Hardcoded credentials or API keys visible in web pages",
+      "exposure_type": "version_disclosure",
+      "severity": "critical",
+      "enabled": true,
+      "search_engine": "google",
+      "notes": "Should never be committed to web-accessible directories"
+    },
+    {
+      "pattern": "site:{target} \"Powered by\" OR \"version\" OR \"apache\" filetype:html",
+      "description": "Service version information disclosed in HTTP headers or HTML",
+      "exposure_type": "version_disclosure",
+      "severity": "low",
+      "enabled": true,
+      "search_engine": "google",
+      "notes": "Useful for targeting known vulnerabilities (requires follow-up testing)"
+    }
+  ]
+}

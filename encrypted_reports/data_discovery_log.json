@@ -1,0 +1,98 @@
+{
+  "report_generated": "2025-11-30T16:10:58.282696",
+  "phase": "Data Discovery & Classification",
+  "total_data_sources": 6,
+  "total_records_at_risk": 493662,
+  "data_sources": [
+    {
+      "data_id": "DATA-0006",
+      "type": "Customer Contact Information",
+      "location": "vulnerable.lab:/var/www/html/export/customers_2024.csv",
+      "classification": "internal",
+      "record_count": 287654,
+      "sample_records": [
+        "John Doe, john@example.com, 555-1234",
+        "Jane Smith, jane@company.com, 555-5678"
+      ],
+      "risk_level": "High",
+      "exfiltration_time": "28.8 minutes over 10 Mbps connection",
+      "compliance_impact": "Breach notification required - 287654 records",
+      "remediation": "Encrypt at rest, implement access controls, audit logs"
+    },
+    {
+      "data_id": "DATA-0001",
+      "type": "User Credentials Database",
+      "location": "vulnerable.lab:/var/lib/mysql/users_table.sql",
+      "classification": "confidential",
+      "record_count": 156250,
+      "sample_records": [
+        "user@example.com:$2y$10$...",
+        "admin@company.com:$2y$10$..."
+      ],
+      "risk_level": "Critical",
+      "exfiltration_time": "15.6 minutes over 10 Mbps connection",
+      "compliance_impact": "Breach notification required - 156250 records",
+      "remediation": "Encrypt at rest, implement access controls, audit logs"
+    },
+    {
+      "data_id": "DATA-0002",
+      "type": "Payment Card Data (PCI-DSS)",
+      "location": "database_server.lab:/data/payments/transactions.db",
+      "classification": "confidential",
+      "record_count": 45892,
+      "sample_records": [
+        "4532-1234-5678-9012",
+        "5425-2345-6789-0123"
+      ],
+      "risk_level": "Critical",
+      "exfiltration_time": "4.6 minutes over 10 Mbps connection",
+      "compliance_impact": "Breach notification required - 45892 records",
+      "remediation": "Encrypt at rest, implement access controls, audit logs"
+    },
+    {
+      "data_id": "DATA-0005",
+      "type": "Source Code Repository",
+      "location": "database_server.lab:/git/application/.git/",
+      "classification": "restricted",
+      "record_count": 2847,
+      "sample_records": [
+        "admin password: hardcoded_secret",
+        "API_KEY in code"
+      ],
+      "risk_level": "High",
+      "exfiltration_time": "0.3 minutes over 10 Mbps connection",
+      "compliance_impact": "Breach notification required - 2847 records",
+      "remediation": "Encrypt at rest, implement access controls, audit logs"
+    },
+    {
+      "data_id": "DATA-0004",
+      "type": "Employee Personal Data",
+      "location": "admin_workstation.lab:/Users/SharedDrive/HR/",
+      "classification": "restricted",
+      "record_count": 892,
+      "sample_records": [
+        "SSN:123-45-6789",
+        "DOB:1990-01-15"
+      ],
+      "risk_level": "High",
+      "exfiltration_time": "0.1 minutes over 10 Mbps connection",
+      "compliance_impact": "Breach notification required - 892 records",
+      "remediation": "Encrypt at rest, implement access controls, audit logs"
+    },
+    {
+      "data_id": "DATA-0003",
+      "type": "API Keys and Secrets",
+      "location": "app_server2.lab:/etc/.env, /var/www/config/",
+      "classification": "confidential",
+      "record_count": 127,
+      "sample_records": [
+        "sk-proj-abc123def456...",
+        "STRIPE_SECRET_KEY=..."
+      ],
+      "risk_level": "Critical",
+      "exfiltration_time": "0.0 minutes over 10 Mbps connection",
+      "compliance_impact": "Breach notification required - 127 records",
+      "remediation": "Encrypt at rest, implement access controls, audit logs"
+    }
+  ]
+}

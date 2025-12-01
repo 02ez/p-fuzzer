@@ -1,0 +1,2259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Penetration Test Report Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --color-critical: #e74c3c;
+            --color-high: #f39c12;
+            --color-medium: #3498db;
+            --color-low: #27ae60;
+            --color-white: #ffffff;
+            --color-dark: #2c3e50;
+            --color-light: #ecf0f1;
+            --color-border: #bdc3c7;
+            --color-hover: #34495e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--color-white);
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--color-dark) 0%, var(--color-hover) 100%);
+            color: var(--color-white);
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--color-light);
+            background: #f8f9fa;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            color: var(--color-dark);
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab-button:hover {
+            background: rgba(0,0,0,0.05);
+            color: var(--color-hover);
+        }
+
+        .tab-button.active {
+            background: var(--color-white);
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 40px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+
+        .risk-critical {
+            background: var(--color-critical);
+            color: var(--color-white);
+        }
+
+        .risk-high {
+            background: var(--color-high);
+            color: var(--color-white);
+        }
+
+        .risk-medium {
+            background: var(--color-medium);
+            color: var(--color-white);
+        }
+
+        .risk-low {
+            background: var(--color-low);
+            color: var(--color-white);
+        }
+
+        .metric-card {
+            background: var(--color-light);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateX(5px);
+        }
+
+        .metric-label {
+            font-size: 0.9em;
+            color: var(--color-dark);
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #667eea;
+            margin-top: 5px;
+        }
+
+        .finding-card {
+            background: var(--color-light);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid var(--color-high);
+        }
+
+        .finding-card.critical {
+            border-left-color: var(--color-critical);
+        }
+
+        .finding-card.high {
+            border-left-color: var(--color-high);
+        }
+
+        .finding-card.medium {
+            border-left-color: var(--color-medium);
+        }
+
+        .finding-card.low {
+            border-left-color: var(--color-low);
+        }
+
+        .finding-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--color-dark);
+        }
+
+        .finding-meta {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            font-size: 0.9em;
+        }
+
+        .finding-section {
+            margin-top: 15px;
+        }
+
+        .finding-section-title {
+            font-weight: 600;
+            color: var(--color-dark);
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .finding-text {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .dashboard-card {
+            background: var(--color-light);
+            padding: 25px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .dashboard-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        .dashboard-label {
+            font-size: 0.9em;
+            color: var(--color-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.8;
+        }
+
+        .dashboard-critical .dashboard-number {
+            color: var(--color-critical);
+        }
+
+        .dashboard-high .dashboard-number {
+            color: var(--color-high);
+        }
+
+        .dashboard-medium .dashboard-number {
+            color: var(--color-medium);
+        }
+
+        .dashboard-low .dashboard-number {
+            color: var(--color-low);
+        }
+
+        .roadmap-item {
+            background: var(--color-light);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #667eea;
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .roadmap-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            border-radius: 4px 0 0 4px;
+        }
+
+        .roadmap-item.immediate::before {
+            background: var(--color-critical);
+        }
+
+        .roadmap-item.urgent::before {
+            background: var(--color-high);
+        }
+
+        .roadmap-item.priority::before {
+            background: var(--color-medium);
+        }
+
+        .roadmap-item.deferred::before {
+            background: var(--color-low);
+        }
+
+        .roadmap-title {
+            font-weight: 600;
+            font-size: 1.1em;
+            color: var(--color-dark);
+            margin-bottom: 8px;
+        }
+
+        .roadmap-description {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .roadmap-timeline {
+            display: inline-block;
+            padding: 5px 12px;
+            background: var(--color-white);
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            color: var(--color-dark);
+            border: 1px solid var(--color-border);
+        }
+
+        .impact-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: var(--color-white);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .impact-table th {
+            background: var(--color-dark);
+            color: var(--color-white);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .impact-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--color-light);
+        }
+
+        .impact-table tr:hover {
+            background: var(--color-light);
+        }
+
+        .impact-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .compliance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .compliance-item {
+            background: var(--color-light);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid var(--color-border);
+        }
+
+        .compliance-item.violated {
+            border-color: var(--color-critical);
+            background: rgba(231, 76, 60, 0.1);
+        }
+
+        .compliance-name {
+            font-weight: 600;
+            color: var(--color-dark);
+            margin-bottom: 5px;
+        }
+
+        .compliance-status {
+            font-size: 0.85em;
+            color: var(--color-critical);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--color-white);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--color-light);
+            color: var(--color-dark);
+            border: 1px solid var(--color-border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--color-border);
+        }
+
+        .btn-danger {
+            background: var(--color-critical);
+            color: var(--color-white);
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        footer {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            color: var(--color-dark);
+            opacity: 0.8;
+            border-top: 1px solid var(--color-light);
+            font-size: 0.9em;
+        }
+
+        .chart-container {
+            background: var(--color-white);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid var(--color-light);
+        }
+
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 15px;
+            height: 200px;
+            margin: 20px 0;
+        }
+
+        .bar-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .bar-fill {
+            width: 100%;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s ease;
+            min-height: 5px;
+        }
+
+        .bar-item:hover .bar-fill {
+            filter: brightness(1.1);
+        }
+
+        .bar-value {
+            font-weight: 600;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: var(--color-dark);
+        }
+
+        .bar-label {
+            text-align: center;
+            font-size: 0.85em;
+            margin-top: 5px;
+            color: var(--color-dark);
+        }
+
+        .print-warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #856404;
+        }
+
+        @media print {
+            body {
+                background: var(--color-white);
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+                border-radius: 0;
+            }
+
+            .tabs {
+                display: none;
+            }
+
+            .button-group {
+                display: none;
+            }
+
+            header {
+                page-break-after: avoid;
+            }
+
+            .tab-content {
+                display: block !important;
+                page-break-inside: avoid;
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .tab-button {
+                min-width: 120px;
+                padding: 12px 15px;
+                font-size: 0.9em;
+            }
+
+            .tab-content {
+                padding: 20px;
+            }
+
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 Penetration Test Report</h1>
+            <p>LabLeakFinder - Comprehensive Security Assessment (L1-L5)</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('dashboard')">📊 Executive Dashboard</button>
+            <button class="tab-button" onclick="switchTab('summary')">📋 Executive Summary</button>
+            <button class="tab-button" onclick="switchTab('methodology')">🔍 Methodology</button>
+            <button class="tab-button" onclick="switchTab('findings')">🎯 Detailed Findings</button>
+            <button class="tab-button" onclick="switchTab('chains')">⛓️ Attack Chains</button>
+            <button class="tab-button" onclick="switchTab('postex')">🔓 Post-Exploitation</button>
+            <button class="tab-button" onclick="switchTab('roadmap')">📈 Remediation Roadmap</button>
+            <button class="tab-button" onclick="switchTab('compliance')">⚖️ Compliance Impact</button>
+            <button class="tab-button" onclick="switchTab('attestation')">✅ Attestation</button>
+        </div>
+
+        <!-- EXECUTIVE DASHBOARD -->
+        <div id="dashboard" class="tab-content active">
+            <h2>Executive Dashboard - Security Posture Overview</h2>
+            <div class="print-warning">
+                ⚠️ <strong>CONFIDENTIAL - EXECUTIVE EYES ONLY</strong><br>
+                This report contains sensitive security findings and must be protected accordingly.
+            </div>
+
+            <div class="dashboard">
+                <div class="dashboard-card dashboard-critical">
+                    <div class="dashboard-label">Overall Risk Rating</div>
+                    <div class="dashboard-number">CRITICAL</div>
+                    <div class="risk-badge risk-critical">Action Required</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-label">Financial Impact</div>
+                    <div class="dashboard-number">$89.5M</div>
+                    <small>Total Loss Potential</small>
+                </div>
+                <div class="dashboard-card dashboard-critical">
+                    <div class="dashboard-label">Vulnerabilities Found</div>
+                    <div class="dashboard-number">10</div>
+                    <small>6 Critical, 4 High</small>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-label">Systems Compromised</div>
+                    <div class="dashboard-number">4</div>
+                    <small>100% Penetration Rate</small>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-label">Records at Risk</div>
+                    <div class="dashboard-number">493K</div>
+                    <small>Sensitive Data Exposed</small>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-label">Time to Exploit</div>
+                    <div class="dashboard-number">Minutes</div>
+                    <small>Full Compromise Chain</small>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 40px; margin-bottom: 20px;">Risk Scorecard: Before & After Remediation</h3>
+            <table class="impact-table">
+                <thead>
+                    <tr>
+                        <th>Risk Metric</th>
+                        <th>Current State</th>
+                        <th>After Remediation</th>
+                        <th>Risk Reduction</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Overall Risk Rating</strong></td>
+                        <td><span class="risk-badge risk-critical">CRITICAL</span></td>
+                        <td><span class="risk-badge risk-low">LOW</span></td>
+                        <td><strong>85% Reduction</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Exploitable Vulnerabilities</strong></td>
+                        <td><span class="risk-badge risk-critical">10 (100%)</span></td>
+                        <td><span class="risk-badge risk-low">0 (0%)</span></td>
+                        <td><strong>100% Elimination</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Financial Exposure</strong></td>
+                        <td><span class="risk-badge risk-critical">$89.5M</span></td>
+                        <td><span class="risk-badge risk-low">$2.0M*</span></td>
+                        <td><strong>$87.5M Savings</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Data Breach Risk</strong></td>
+                        <td><span class="risk-badge risk-critical">Very High</span></td>
+                        <td><span class="risk-badge risk-low">Minimal</span></td>
+                        <td><strong>99% Reduction</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Regulatory Compliance</strong></td>
+                        <td><span class="risk-badge risk-critical">Non-Compliant</span></td>
+                        <td><span class="risk-badge risk-low">Compliant</span></td>
+                        <td><strong>Full Compliance</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="margin-top: 15px; color: #666; font-size: 0.9em;">
+                * Residual risk assumes implementation of all Priority 1 recommendations. Assumes industry-standard incident response procedures.
+            </p>
+
+            <h3 style="margin-top: 40px; margin-bottom: 20px;">Key Metrics Overview</h3>
+            <div class="chart-container">
+                <h4 style="margin-bottom: 20px; color: var(--color-dark);">Vulnerability Severity Distribution</h4>
+                <div class="bar-chart">
+                    <div class="bar-item">
+                        <div class="bar-fill" style="background: var(--color-critical); height: 90%;"></div>
+                        <div class="bar-value">6</div>
+                        <div class="bar-label">Critical</div>
+                    </div>
+                    <div class="bar-item">
+                        <div class="bar-fill" style="background: var(--color-high); height: 60%;"></div>
+                        <div class="bar-value">4</div>
+                        <div class="bar-label">High</div>
+                    </div>
+                    <div class="bar-item">
+                        <div class="bar-fill" style="background: var(--color-medium); height: 0%;"></div>
+                        <div class="bar-value">0</div>
+                        <div class="bar-label">Medium</div>
+                    </div>
+                    <div class="bar-item">
+                        <div class="bar-fill" style="background: var(--color-low); height: 0%;"></div>
+                        <div class="bar-value">0</div>
+                        <div class="bar-label">Low</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 30px; margin-bottom: 15px;">Immediate Actions Required</h3>
+            <div style="background: #ffe6e6; padding: 20px; border-radius: 8px; border-left: 4px solid var(--color-critical); margin: 15px 0;">
+                <strong style="color: var(--color-critical); font-size: 1.1em;">⚠️ CRITICAL - Next 24 Hours:</strong>
+                <ul style="margin: 10px 0 0 20px; color: #555; line-height: 1.8;">
+                    <li>CEO/CIO briefing on findings and business impact</li>
+                    <li>Declare internal incident response if actual compromise occurred</li>
+                    <li>Activate incident response team and legal counsel</li>
+                    <li>Begin immediate network isolation of affected systems</li>
+                    <li>Disable all identified exploitable services</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- EXECUTIVE SUMMARY -->
+        <div id="summary" class="tab-content">
+            <h2>Executive Summary</h2>
+            <div class="print-warning">
+                This section is written for C-suite executives and board members. It avoids technical jargon while communicating critical business risk.
+            </div>
+
+            <h3>Overall Assessment</h3>
+            <p>
+                During a comprehensive penetration test of your organization's critical systems, our security team identified <strong>10 significant vulnerabilities</strong> that, if exploited by a sophisticated attacker, would result in <strong>complete compromise of your enterprise infrastructure</strong> and exposure of <strong>493,000 sensitive records</strong>.
+            </p>
+
+            <div class="metric-card">
+                <div class="metric-label">Risk Rating</div>
+                <div class="metric-value" style="color: var(--color-critical);">CRITICAL</div>
+                <p style="margin-top: 10px; color: #555;">
+                    Your organization currently faces a critical security risk that requires immediate executive attention and board-level resource allocation.
+                </p>
+            </div>
+
+            <h3 style="margin-top: 30px;">Financial Impact</h3>
+            <p>
+                If these vulnerabilities are exploited in a real attack, your organization faces:
+            </p>
+            <table class="impact-table">
+                <tr>
+                    <td><strong>Direct Costs</strong></td>
+                    <td style="text-align: right;">
+                        <strong style="color: var(--color-critical);">$79.5M</strong>
+                        <div style="font-size: 0.85em; color: #666;">Data breach notifications, regulatory fines, incident response</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Operational Impact</strong></td>
+                    <td style="text-align: right;">
+                        <strong style="color: var(--color-critical);">$5.0M</strong>
+                        <div style="font-size: 0.85em; color: #666;">48-72 hours of system downtime, lost revenue</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Reputational Damage</strong></td>
+                    <td style="text-align: right;">
+                        <strong style="color: var(--color-critical);">$5.0M+</strong>
+                        <div style="font-size: 0.85em; color: #666;">20% customer churn, lost contracts, brand erosion</div>
+                    </td>
+                </tr>
+                <tr style="background: rgba(231, 76, 60, 0.1);">
+                    <td><strong>TOTAL POTENTIAL LOSS</strong></td>
+                    <td style="text-align: right;">
+                        <strong style="color: var(--color-critical); font-size: 1.2em;">$89.5M+</strong>
+                    </td>
+                </tr>
+            </table>
+
+            <h3 style="margin-top: 30px;">Key Findings at a Glance</h3>
+            <div class="finding-card critical">
+                <div class="finding-title">6 Critical Vulnerabilities</div>
+                <p style="color: #555; line-height: 1.6;">
+                    Remote Code Execution, SQL Injection, Authentication Bypass, and other high-impact flaws that allow attackers to take complete control of your systems without any authorization.
+                </p>
+            </div>
+
+            <div class="finding-card high">
+                <div class="finding-title">4 High-Risk Issues</div>
+                <p style="color: #555; line-height: 1.6;">
+                    Weak credentials, unnecessary services, and misconfigurations that significantly increase the attack surface and allow lateral movement through your network.
+                </p>
+            </div>
+
+            <div class="finding-card critical">
+                <div class="finding-title">493,000 Records at Risk</div>
+                <p style="color: #555; line-height: 1.6;">
+                    Customer data, payment information, employee records, API credentials, and source code were accessible to our penetration testers with basic exploitation techniques.
+                </p>
+            </div>
+
+            <h3 style="margin-top: 30px;">What This Means for Your Business</h3>
+            <ul style="margin: 15px 0 15px 20px; color: #555; line-height: 1.8;">
+                <li><strong>Regulatory Non-Compliance:</strong> Your organization is currently non-compliant with GDPR, CCPA, PCI-DSS, and HIPAA requirements.</li>
+                <li><strong>Legal Liability:</strong> Data breach notification laws require disclosure within 30-90 days. Non-compliance results in additional fines.</li>
+                <li><strong>Customer Trust:</strong> A breach would destroy customer confidence and result in significant market share loss.</li>
+                <li><strong>Operational Continuity:</strong> Attackers could shut down critical systems, halting revenue-generating operations.</li>
+                <li><strong>Competitive Disadvantage:</strong> Theft of intellectual property and source code gives competitors unfair advantage.</li>
+            </ul>
+
+            <h3 style="margin-top: 30px;">Recommended Immediate Actions</h3>
+            <p style="margin-bottom: 15px;">
+                To reduce your risk to acceptable levels, we recommend the following prioritized remediation plan:
+            </p>
+
+            <div class="roadmap-item immediate">
+                <div class="roadmap-title">Next 7 Days - CRITICAL Actions</div>
+                <div class="roadmap-description">
+                    Patch all identified vulnerabilities, disable unnecessary services, implement network segmentation, and rotate all credentials.
+                </div>
+                <div class="roadmap-timeline">Estimated Cost: $150K-200K</div>
+            </div>
+
+            <div class="roadmap-item urgent">
+                <div class="roadmap-title">Days 8-30 - URGENT Actions</div>
+                <div class="roadmap-description">
+                    Deploy endpoint detection and response (EDR), implement multi-factor authentication, establish security monitoring, and conduct staff security training.
+                </div>
+                <div class="roadmap-timeline">Estimated Cost: $250K-350K</div>
+            </div>
+
+            <div class="roadmap-item priority">
+                <div class="roadmap-title">Months 1-3 - Priority Actions</div>
+                <div class="roadmap-description">
+                    Upgrade infrastructure, implement data loss prevention (DLP), establish security operations center (SOC), and conduct compliance audits.
+                </div>
+                <div class="roadmap-timeline">Estimated Cost: $500K-750K</div>
+            </div>
+
+            <h3 style="margin-top: 30px;">Return on Investment (ROI)</h3>
+            <p>
+                For every $1 invested in implementing these recommendations, your organization saves <strong>$15-20</strong> in potential breach costs. The recommended remediations represent one of the highest ROI security investments available.
+            </p>
+
+            <div class="metric-card">
+                <div class="metric-label">Investment vs. Savings</div>
+                <div class="metric-value">$1M Investment</div>
+                <p style="margin-top: 10px; color: #555;">
+                    Prevents <strong style="color: var(--color-critical);">$15-20M in breach costs</strong><br>
+                    <strong>1,400% ROI in Year 1</strong>
+                </p>
+            </div>
+
+            <h3 style="margin-top: 30px;">Conclusion</h3>
+            <p>
+                Your organization faces a critical security emergency that requires immediate board and executive attention. However, the situation is remediable with focused investment in the recommended controls. We stand ready to support your remediation efforts and provide ongoing security guidance.
+            </p>
+        </div>
+
+        <!-- METHODOLOGY -->
+        <div id="methodology" class="tab-content">
+            <h2>Testing Methodology & Scope</h2>
+
+            <h3>Framework Alignment</h3>
+            <p>
+                This penetration test followed industry-standard methodologies aligned with:
+            </p>
+            <ul style="margin: 15px 0 15px 20px; color: #555; line-height: 1.8;">
+                <li><strong>NIST SP 800-115:</strong> Technical Guide to Information Security Testing and Assessment</li>
+                <li><strong>CompTIA PenTest+ Domains:</strong> All 5 major domains of the certification curriculum</li>
+                <li><strong>OWASP Testing Guide:</strong> Application security testing methodology</li>
+                <li><strong>PTES (Penetration Testing Execution Standard):</strong> Industry best practices</li>
+            </ul>
+
+            <h3 style="margin-top: 30px;">Five-Phase Approach</h3>
+
+            <div class="finding-card">
+                <div class="finding-title">Phase 1: Planning & Scoping (L1)</div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Objectives Defined:</div>
+                    <div class="finding-text">
+                        • Assess organizational security posture<br>
+                        • Identify exploitable vulnerabilities<br>
+                        • Demonstrate business impact of successful attacks<br>
+                        • Provide actionable remediation recommendations
+                    </div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Scope:</div>
+                    <div class="finding-text">
+                        • Target systems: vulnerable.lab, database_server.lab, app_server2.lab, admin_workstation.lab<br>
+                        • Testing type: Internal network penetration test (white-box)<br>
+                        • Authorization: Pre-approved by IT leadership<br>
+                        • Rules of Engagement: Non-destructive testing in controlled lab environment
+                    </div>
+                </div>
+            </div>
+
+            <div class="finding-card">
+                <div class="finding-title">Phase 2: Information Gathering (L1-L2-L3)</div>
+                <div class="finding-section">
+                    <div class="finding-section-title">L1 - Reconnaissance:</div>
+                    <div class="finding-text">
+                        Passive information gathering identified 7 reconnaissance patterns including domain enumeration, service discovery, and configuration analysis.
+                    </div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">L2 - Query Formatting:</div>
+                    <div class="finding-text">
+                        Generated 10 formatted queries targeting specific vulnerability classes such as SQL injection, authentication bypass, and remote code execution.
+                    </div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">L3 - Vulnerability Assessment:</div>
+                    <div class="finding-text">
+                        Identified 10 confirmed vulnerabilities with CVSS scoring (6 CRITICAL, 4 HIGH). Each finding mapped to MITRE ATT&CK framework and CWE/CVE identifiers.
+                    </div>
+                </div>
+            </div>
+
+            <div class="finding-card">
+                <div class="finding-title">Phase 3: Active Exploitation (L4)</div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Exploitation Results:</div>
+                    <div class="finding-text">
+                        Successfully demonstrated exploitation of all 6 CRITICAL vulnerabilities with full proof-of-concept (PoC) evidence. Created 2 independent attack chains achieving complete system compromise.
+                    </div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Initial Access:</div>
+                    <div class="finding-text">
+                        Remote Code Execution via SQL injection in web application, leading to OS-level command execution with application service account privileges.
+                    </div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Attack Timeline:</div>
+                    <div class="finding-text">
+                        Complete system compromise achieved in &lt;10 minutes from initial connection to achieving SYSTEM-level privileges.
+                    </div>
+                </div>
+            </div>
+
+            <div class="finding-card">
+                <div class="finding-title">Phase 4: Post-Exploitation (L5)</div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Post-Exploitation Activities:</div>
+                    <div class="finding-text">
+                        • Persistence: 3 mechanisms established for persistent access<br>
+                        • Lateral Movement: 6 successful pivots to internal systems<br>
+                        • Data Discovery: 6 sensitive data sources identified<br>
+                        • Impact: 493,662 records compromised, $89.5M total financial impact
+                    </div>
+                </div>
+            </div>
+
+            <div class="finding-card">
+                <div class="finding-title">Phase 5: Reporting & Communication (This Report)</div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Deliverables:</div>
+                    <div class="finding-text">
+                        • Multi-audience report (Executive, Management, Technical)<br>
+                        • Detailed findings with remediation guidance<br>
+                        • Attack chain documentation<br>
+                        • Compliance impact assessment<br>
+                        • Prioritized remediation roadmap
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 30px;">Tools & Techniques Used</h3>
+            <table class="impact-table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Tools/Techniques</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Reconnaissance</td>
+                        <td>Nmap, DNS enumeration, service banners</td>
+                        <td>Identify services and potential vulnerabilities</td>
+                    </tr>
+                    <tr>
+                        <td>Web Application Testing</td>
+                        <td>SQL injection, authentication bypass, XSS</td>
+                        <td>Exploit web-based vulnerabilities</td>
+                    </tr>
+                    <tr>
+                        <td>Network Exploitation</td>
+                        <td>SMB, RPC, DCOM, WMI abuse</td>
+                        <td>Lateral movement and privilege escalation</td>
+                    </tr>
+                    <tr>
+                        <td>Post-Exploitation</td>
+                        <td>Credential harvesting, data discovery, persistence</td>
+                        <td>Maintain access and demonstrate impact</td>
+                    </tr>
+                    <tr>
+                        <td>Evasion</td>
+                        <td>Living-off-the-land techniques, process injection</td>
+                        <td>Avoid endpoint detection</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="margin-top: 30px;">Valid as of Date</h3>
+            <p>
+                This report is valid as of <strong>November 30, 2025</strong>. Changes to systems, configurations, patches, or controls implemented after this date may affect the accuracy of findings. We recommend periodic retesting (quarterly for CRITICAL findings, semi-annually for comprehensive reassessment).
+            </p>
+        </div>
+
+        <!-- DETAILED FINDINGS -->
+        <div id="findings" class="tab-content">
+            <h2>Detailed Findings (10 Vulnerabilities Identified)</h2>
+
+            <div class="finding-card critical">
+                <div class="finding-title">Finding 1: Remote Code Execution (RCE) via SQL Injection</div>
+                <div class="finding-meta">
+                    <span class="risk-badge risk-critical">CRITICAL (CVSS 10.0)</span>
+                    <span style="color: #555;">Affected Systems: vulnerable.lab (Web App)</span>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Description:</div>
+                    <div class="finding-text">
+                        The web application fails to properly sanitize user input in the login form, allowing SQL injection attacks. By injecting malicious SQL, an attacker can bypass authentication and execute arbitrary system commands with application service account privileges.
+                    </div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Proof of Concept:</div>
+                    <div class="finding-text">
+                        <code>POST /login</code><br>
+                        <code>username: admin' OR '1'='1'; EXEC xp_cmdshell 'whoami'; --</code><br>
+                        <code>Result: Command execution as IISAPPPOOL\DefaultAppPool</code>
+                    </div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Business Impact:</div>
+                    <div class="finding-text">
+                        Complete compromise of web application and underlying database. Attacker gains system-level access with ability to exfiltrate all data, install malware, and pivot to internal network.
+                    </div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Remediation (IMMEDIATE):</div>
+                    <div class="finding-text">
+                        • Use parameterized queries and prepared statements<br>
+                        • Implement input validation (whitelist approach)<br>
+                        • Apply principle of least privilege to database service account<br>
+                        • Disable xp_cmdshell stored procedure<br>
+                        • Implement Web Application Firewall (WAF) rules<br>
+                        • Estimated fix time: 4-8 hours
+                    </div>
+                </div>
+            </div>
+
+            <div class="finding-card critical">
+                <div class="finding-title">Finding 2: Authentication Bypass</div>
+                <div class="finding-meta">
+                    <span class="risk-badge risk-critical">CRITICAL (CVSS 9.8)</span>
+                    <span style="color: #555;">Affected Systems: app_server2.lab (API)</span>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Description:</div>
+                    <div class="finding-text">
+                        The REST API does not properly validate authentication tokens. Attackers can bypass authentication by omitting the Authorization header or by providing an invalid/expired token.
+                    </div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Proof of Concept:</div>
+                    <div class="finding-text">
+                        <code>GET /api/v1/admin/users</code><br>
+                        <code>Header: Authorization: (omitted)</code><br>
+                        <code>Result: Returns complete user database with passwords</code>
+                    </div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Remediation (IMMEDIATE):</div>
+                    <div class="finding-text">
+                        • Implement proper JWT token validation<br>
+                        • Add mandatory authentication checks to all endpoints<br>
+                        • Implement token expiration and refresh mechanisms<br>
+                        • Estimated fix time: 2-4 hours
+                    </div>
+                </div>
+            </div>
+
+            <div class="finding-card critical">
+                <div class="finding-title">Finding 3: Weak Credentials in Configuration Files</div>
+                <div class="finding-meta">
+                    <span class="risk-badge risk-critical">CRITICAL (CVSS 9.6)</span>
+                    <span style="color: #555;">Affected Systems: database_server.lab</span>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Description:</div>
+                    <div class="finding-text">
+                        Database and application credentials hardcoded in configuration files in plain text. Files readable by all system users.
+                    </div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Credentials Found:</div>
+                    <div class="finding-text">
+                        • Database: sa/MyS3cr3tP@ss (SA account with full administrative access)<br>
+                        • API: secret_key=4f4n58dfn458vn34n5 (weak symmetric key)<br>
+                        • FTP: admin/Password123 (common weak password)
+                    </div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Remediation (IMMEDIATE):</div>
+                    <div class="finding-text">
+                        • Rotate all compromised credentials<br>
+                        • Implement secrets management solution (HashiCorp Vault, AWS Secrets Manager)<br>
+                        • Remove credentials from configuration files<br>
+                        • Implement proper access controls on config files<br>
+                        • Estimated fix time: 6-12 hours (includes credential rotation)
+                    </div>
+                </div>
+            </div>
+
+            <div class="finding-card critical">
+                <div class="finding-title">Finding 4: Unpatched Operating System (EternalBlue Vulnerability)</div>
+                <div class="finding-meta">
+                    <span class="risk-badge risk-critical">CRITICAL (CVSS 9.0)</span>
+                    <span style="color: #555;">Affected Systems: vulnerable.lab (Windows 7 SP1)</span>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Description:</div>
+                    <div class="finding-text">
+                        Critical Windows vulnerability CVE-2017-0144 (EternalBlue) is unpatched on production system. Allows remote code execution without authentication via SMB protocol.
+                    </div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Remediation (IMMEDIATE):</div>
+                    <div class="finding-text">
+                        • Apply Windows KB4012215 (MS17-010)<br>
+                        • Block SMB externally (TCP 139, 445)<br>
+                        • Upgrade to Windows 10 or newer (Windows 7 end-of-life)<br>
+                        • Estimated fix time: 1-2 hours (patch) or 4-8 hours (upgrade)
+                    </div>
+                </div>
+            </div>
+
+            <div class="finding-card critical">
+                <div class="finding-title">Finding 5: Unnecessary Open Services</div>
+                <div class="finding-meta">
+                    <span class="risk-badge risk-critical">CRITICAL (CVSS 8.8)</span>
+                    <span style="color: #555;">Affected Systems: All servers</span>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Description:</div>
+                    <div class="finding-text">
+                        Multiple unnecessary services enabled and listening on network ports:
+                    </div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Services Identified:</div>
+                    <div class="finding-text">
+                        • FTP (21/tcp) - Unencrypted, credentials exposed<br>
+                        • Telnet (23/tcp) - Cleartext remote access<br>
+                        • SNMP (161/udp) - No authentication, community string "public"<br>
+                        • SMB (445/tcp) - Exposed to network without segmentation
+                    </div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Remediation (URGENT):</div>
+                    <div class="finding-text">
+                        • Disable FTP - Use SFTP instead<br>
+                        • Disable Telnet - Use SSH instead<br>
+                        • Disable SNMP - Use SNMPv3 with authentication if needed<br>
+                        • Implement network segmentation and firewall rules<br>
+                        • Estimated fix time: 2-4 hours
+                    </div>
+                </div>
+            </div>
+
+            <div class="finding-card critical">
+                <div class="finding-title">Finding 6: Local Privilege Escalation via Scheduled Task</div>
+                <div class="finding-meta">
+                    <span class="risk-badge risk-critical">CRITICAL (CVSS 8.5)</span>
+                    <span style="color: #555;">Affected Systems: vulnerable.lab</span>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Description:</div>
+                    <div class="finding-text">
+                        Scheduled task runs as SYSTEM and executes a batch file in a directory where low-privileged users can write files. Allows privilege escalation from user to SYSTEM.
+                    </div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Remediation (IMMEDIATE):</div>
+                    <div class="finding-text">
+                        • Apply least privilege to scheduled task (run as service account, not SYSTEM)<br>
+                        • Remove write permissions from batch file directory<br>
+                        • Implement access controls: NTFS permissions restrict modification<br>
+                        • Estimated fix time: 1-2 hours
+                    </div>
+                </div>
+            </div>
+
+            <div class="finding-card high">
+                <div class="finding-title">Finding 7: Weak Password Policy</div>
+                <div class="finding-meta">
+                    <span class="risk-badge risk-high">HIGH (CVSS 7.5)</span>
+                    <span style="color: #555;">Affected Systems: All domain systems</span>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Description:</div>
+                    <div class="finding-text">
+                        Domain password policy allows passwords as short as 6 characters with no complexity requirements. Common weak passwords identified: "Password123", "Admin123", "Company2024".
+                    </div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Remediation (URGENT):</div>
+                    <div class="finding-text">
+                        • Enforce minimum 14-character password length<br>
+                        • Require complexity (uppercase, lowercase, numbers, symbols)<br>
+                        • Implement MFA for all administrative accounts<br>
+                        • Force password reset on compromised accounts<br>
+                        • Estimated fix time: 4-6 hours
+                    </div>
+                </div>
+            </div>
+
+            <div class="finding-card high">
+                <div class="finding-title">Finding 8: Shared Local Administrator Credentials</div>
+                <div class="finding-meta">
+                    <span class="risk-badge risk-high">HIGH (CVSS 7.2)</span>
+                    <span style="color: #555;">Affected Systems: All servers</span>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Description:</div>
+                    <div class="finding-text">
+                        All servers use the same local administrator credentials (admin/P@ssw0rd). If one server is compromised, attacker gains administrative access to entire infrastructure.
+                    </div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Remediation (URGENT):</div>
+                    <div class="finding-text">
+                        • Implement Local Administrator Password Solution (LAPS)<br>
+                        • Randomize local admin credentials per server<br>
+                        • Remove shared credentials from staff<br>
+                        • Estimated fix time: 8-12 hours (requires LAPS deployment)
+                    </div>
+                </div>
+            </div>
+
+            <div class="finding-card high">
+                <div class="finding-title">Finding 9: No Encryption on Data in Transit</div>
+                <div class="finding-meta">
+                    <span class="risk-badge risk-high">HIGH (CVSS 6.8)</span>
+                    <span style="color: #555;">Affected Systems: All servers</span>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Description:</div>
+                    <div class="finding-text">
+                        Database traffic, API communications, and administrative access transmitted in cleartext without TLS/SSL encryption. Attacker can sniff network traffic and capture credentials.
+                    </div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Remediation (URGENT):</div>
+                    <div class="finding-text">
+                        • Enforce TLS 1.2+ for all network communications<br>
+                        • Implement valid SSL/TLS certificates<br>
+                        • Disable cleartext protocols (HTTP, Telnet, FTP)<br>
+                        • Implement network encryption for sensitive traffic<br>
+                        • Estimated fix time: 6-10 hours
+                    </div>
+                </div>
+            </div>
+
+            <div class="finding-card high">
+                <div class="finding-title">Finding 10: Lack of Security Monitoring</div>
+                <div class="finding-meta">
+                    <span class="risk-badge risk-high">HIGH (CVSS 6.5)</span>
+                    <span style="color: #555;">Affected Systems: All systems</span>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Description:</div>
+                    <div class="finding-text">
+                        No centralized logging, no SIEM solution, no intrusion detection, no EDR solution. Attack activities went completely undetected throughout the test.
+                    </div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Remediation (PRIORITY 1):</div>
+                    <div class="finding-text">
+                        • Deploy SIEM solution (Splunk, ELK, Azure Sentinel)<br>
+                        • Implement centralized logging from all systems<br>
+                        • Deploy EDR solution on all endpoints<br>
+                        • Implement IDS/IPS on network<br>
+                        • Estimated fix time: 2-4 weeks (ongoing)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATTACK CHAINS -->
+        <div id="chains" class="tab-content">
+            <h2>Attack Chains: How Vulnerabilities Are Exploited Together</h2>
+
+            <h3>Attack Chain 1: Backup Compromise to Database Breach</h3>
+            <div style="background: #f0f0f0; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid var(--color-critical);">
+                <strong style="font-size: 1.1em; display: block; margin-bottom: 15px;">Step-by-Step Attack Path</strong>
+
+                <div style="display: flex; align-items: center; margin: 15px 0;">
+                    <div style="background: var(--color-critical); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; margin-right: 15px;">1</div>
+                    <div>
+                        <strong>Initial Reconnaissance</strong> - Attacker identifies backup server with weak FTP access (Finding 5)<br>
+                        <span style="font-size: 0.9em; color: #666;">Time: &lt;5 minutes | Risk: Backup admin credentials exposed via FTP</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; margin: 15px 0;">
+                    <div style="background: var(--color-critical); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; margin-right: 15px;">2</div>
+                    <div>
+                        <strong>Credential Exploitation</strong> - Weak FTP credentials captured: admin/Password123 (Finding 7)<br>
+                        <span style="font-size: 0.9em; color: #666;">Time: 5-10 minutes | Risk: Remote access to backup system achieved</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; margin: 15px 0;">
+                    <div style="background: var(--color-critical); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; margin-right: 15px;">3</div>
+                    <div>
+                        <strong>Privilege Escalation</strong> - Scheduled task vulnerability exploited (Finding 6) to escalate from FTP user to SYSTEM<br>
+                        <span style="font-size: 0.9em; color: #666;">Time: 10-15 minutes | Risk: Full backup server compromise achieved</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; margin: 15px 0;">
+                    <div style="background: var(--color-critical); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; margin-right: 15px;">4</div>
+                    <div>
+                        <strong>Data Access</strong> - Access backup files containing database credentials in plaintext (Finding 3)<br>
+                        <span style="font-size: 0.9em; color: #666;">Time: 15-20 minutes | Risk: Database SA credentials extracted: sa/MyS3cr3tP@ss</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; margin: 15px 0;">
+                    <div style="background: var(--color-critical); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; margin-right: 15px;">5</div>
+                    <div>
+                        <strong>Database Breach</strong> - Use SA credentials to connect to database server (shared admin creds Finding 8)<br>
+                        <span style="font-size: 0.9em; color: #666;">Time: 20-25 minutes | Risk: Complete database access with SA privileges</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; margin: 15px 0;">
+                    <div style="background: var(--color-critical); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; margin-right: 15px;">6</div>
+                    <div>
+                        <strong>Data Exfiltration</strong> - 493,662 sensitive records exported via unmonitored database (Finding 10)<br>
+                        <span style="font-size: 0.9em; color: #666;">Time: 25-30 minutes | Result: COMPLETE COMPROMISE - All customer/payment data exposed</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Attack Chain 2: Web Application to System Compromise</h3>
+            <div style="background: #f0f0f0; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid var(--color-critical);">
+                <strong style="font-size: 1.1em; display: block; margin-bottom: 15px;">Step-by-Step Attack Path</strong>
+
+                <div style="display: flex; align-items: center; margin: 15px 0;">
+                    <div style="background: var(--color-critical); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; margin-right: 15px;">1</div>
+                    <div>
+                        <strong>SQL Injection Attack</strong> - Exploit unpatched SQL injection vulnerability (Finding 1)<br>
+                        <code style="display: block; margin-top: 5px; background: #333; color: #0f0; padding: 8px; border-radius: 4px; font-size: 0.85em;">admin' OR '1'='1'; EXEC xp_cmdshell 'whoami'; --</code>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; margin: 15px 0;">
+                    <div style="background: var(--color-critical); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; margin-right: 15px;">2</div>
+                    <div>
+                        <strong>Remote Code Execution</strong> - Execute system commands as IISAPPPOOL\DefaultAppPool<br>
+                        <span style="font-size: 0.9em; color: #666;">Time: &lt;5 minutes | Risk: OS-level command execution achieved</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; margin: 15px 0;">
+                    <div style="background: var(--color-critical); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; margin-right: 15px;">3</div>
+                    <div>
+                        <strong>Privilege Escalation</strong> - Escalate from IISAPPPOOL to SYSTEM via unpatched kernel vulnerability (Finding 4)<br>
+                        <span style="font-size: 0.9em; color: #666;">Time: 5-10 minutes | Risk: Full administrative access to vulnerable.lab</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; margin: 15px 0;">
+                    <div style="background: var(--color-critical); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; margin-right: 15px;">4</div>
+                    <div>
+                        <strong>Lateral Movement</strong> - Use SMB to exploit adjacent systems with shared admin credentials (Finding 8)<br>
+                        <span style="font-size: 0.9em; color: #666;">Time: 10-15 minutes | Risk: database_server.lab, app_server2.lab, admin_workstation.lab compromised</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; margin: 15px 0;">
+                    <div style="background: var(--color-critical); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; margin-right: 15px;">5</div>
+                    <div>
+                        <strong>Persistence Establishment</strong> - Install backdoors on all compromised systems for future access<br>
+                        <span style="font-size: 0.9em; color: #666;">Time: 15-20 minutes | Risk: Attacker retains access even after initial compromise is discovered</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; margin: 15px 0;">
+                    <div style="background: var(--color-critical); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; margin-right: 15px;">6</div>
+                    <div>
+                        <strong>Full Infrastructure Compromise</strong> - All systems under attacker control, no security monitoring (Finding 10)<br>
+                        <span style="font-size: 0.9em; color: #666;">Time: &lt;30 minutes | Result: COMPLETE COMPROMISE - Enterprise infrastructure owned by attacker</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 40px;">Key Insights from Attack Chains</h3>
+            <ul style="margin: 15px 0 15px 20px; color: #555; line-height: 1.8;">
+                <li><strong>Speed:</strong> Both attack chains achieve complete infrastructure compromise in less than 30 minutes</li>
+                <li><strong>No Detection:</strong> Security monitoring gaps (Finding 10) ensure attacker activities go undetected</li>
+                <li><strong>Multiple Paths:</strong> The environment has redundant attack paths - fixing one vulnerability is insufficient</li>
+                <li><strong>Credential Reuse:</strong> Shared credentials (Finding 8) accelerate lateral movement significantly</li>
+                <li><strong>Patch Gaps:</strong> Unpatched systems (Finding 4) provide immediate exploitation path</li>
+            </ul>
+        </div>
+
+        <!-- POST-EXPLOITATION IMPACT -->
+        <div id="postex" class="tab-content">
+            <h2>Post-Exploitation Impact & Data at Risk</h2>
+
+            <h3>Persistence Mechanisms Established</h3>
+            <div class="finding-card critical">
+                <div class="finding-title">PERS-0001: Scheduled Task Backdoor</div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Location:</div>
+                    <div class="finding-text">C:\Windows\System32\Tasks\SystemUpdate</div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Trigger:</div>
+                    <div class="finding-text">Every 6 hours + system startup</div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Function:</div>
+                    <div class="finding-text">Establishes reverse shell connection to attacker C&C server (192.168.100.50:4444)</div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Detection Difficulty:</div>
+                    <div class="finding-text">Medium - Detectable via Windows Event Logs if SIEM is configured</div>
+                </div>
+            </div>
+
+            <div class="finding-card critical">
+                <div class="finding-title">PERS-0002: Backdoor Administrator Account</div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Account Name:</div>
+                    <div class="finding-text">BackupAdmin (appears legitimate)</div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Credentials:</div>
+                    <div class="finding-text">BackupAdmin / Backdoor@2024!</div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Privileges:</div>
+                    <div class="finding-text">Local Administrator + Domain Admin (via delegation)</div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Function:</div>
+                    <div class="finding-text">Persistent remote access via RDP - even if initial compromise is detected, attacker can reconnect</div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Detection Difficulty:</div>
+                    <div class="finding-text">High - Appears as legitimate backup admin account unless account usage patterns are monitored</div>
+                </div>
+            </div>
+
+            <div class="finding-card critical">
+                <div class="finding-title">PERS-0003: Web Shell</div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Location:</div>
+                    <div class="finding-text">/var/www/html/admin/.cache/update.php</div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Access Method:</div>
+                    <div class="finding-text">HTTP request: GET /admin/.cache/update.php?cmd=whoami</div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Function:</div>
+                    <div class="finding-text">Web-based shell for remote command execution - survives system reboots</div>
+                </div>
+                <div class="finding-section">
+                    <div class="finding-section-title">Detection Difficulty:</div>
+                    <div class="finding-text">Medium - Detectable via web server logs and file integrity monitoring</div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 30px;">Lateral Movement Success Rate</h3>
+            <p>
+                From the initial compromised system (vulnerable.lab), successful lateral movement to:
+            </p>
+            <ul style="margin: 15px 0 15px 20px; color: #555; line-height: 1.8;">
+                <li><strong>database_server.lab:</strong> 100% success rate (2/2 techniques) - Via SMB and SSH</li>
+                <li><strong>app_server2.lab:</strong> 100% success rate (2/2 techniques) - Via SMB and SSH</li>
+                <li><strong>admin_workstation.lab:</strong> 100% success rate (2/2 techniques) - Via SMB and SSH</li>
+            </ul>
+            <p>
+                <strong>Overall Lateral Movement Success Rate: 67% (6/9 attempts)</strong> - Extremely high rate of network penetration
+            </p>
+
+            <h3 style="margin-top: 30px;">Sensitive Data Discovered & Compromised</h3>
+
+            <div class="metric-card">
+                <div class="metric-label">Total Records at Risk</div>
+                <div class="metric-value">493,662 Records</div>
+            </div>
+
+            <table class="impact-table">
+                <thead>
+                    <tr>
+                        <th>Data Type</th>
+                        <th>Records</th>
+                        <th>Classification</th>
+                        <th>Compliance Impact</th>
+                        <th>Business Impact</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>User Credentials</strong></td>
+                        <td>156,250</td>
+                        <td>Confidential</td>
+                        <td>GDPR violation</td>
+                        <td>$23.4M notification cost</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Payment Card Data</strong></td>
+                        <td>45,892</td>
+                        <td>Confidential</td>
+                        <td>PCI-DSS violation</td>
+                        <td>$6.9M notification + $2.3M PCI fines</td>
+                    </tr>
+                    <tr>
+                        <td><strong>API Keys/Secrets</strong></td>
+                        <td>127</td>
+                        <td>Confidential</td>
+                        <td>Service compromise</td>
+                        <td>Potential widespread lateral movement</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Employee PII</strong></td>
+                        <td>892</td>
+                        <td>Restricted</td>
+                        <td>Privacy violations</td>
+                        <td>$133.8K notification cost</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Source Code</strong></td>
+                        <td>2,847 files</td>
+                        <td>Restricted</td>
+                        <td>IP theft</td>
+                        <td>Competitive advantage lost</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Customer Contacts</strong></td>
+                        <td>287,654</td>
+                        <td>Internal</td>
+                        <td>GDPR/CCPA violation</td>
+                        <td>$43.1M notification cost</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="margin-top: 30px;">Financial Impact Breakdown</h3>
+
+            <div class="dashboard">
+                <div class="dashboard-card">
+                    <div class="dashboard-label">Data Breach Notification</div>
+                    <div class="dashboard-number" style="color: var(--color-critical);">$74.0M</div>
+                    <small>493K records × $150/record avg.</small>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-label">Operational Downtime</div>
+                    <div class="dashboard-number" style="color: var(--color-critical);">$480K</div>
+                    <small>48 hours @ $10K/hour</small>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-label">Regulatory Fines</div>
+                    <div class="dashboard-number" style="color: var(--color-critical);">$5.0M</div>
+                    <small>GDPR/CCPA penalties</small>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-label">Reputational Damage</div>
+                    <div class="dashboard-number" style="color: var(--color-critical);">$10.0M</div>
+                    <small>20% customer churn</small>
+                </div>
+            </div>
+
+            <div style="background: rgba(231, 76, 60, 0.1); padding: 25px; border-radius: 8px; border-left: 4px solid var(--color-critical); margin: 30px 0;">
+                <div style="font-size: 1.3em; font-weight: 700; color: var(--color-critical); margin-bottom: 10px;">
+                    TOTAL FINANCIAL IMPACT: $89,529,300
+                </div>
+                <p style="color: #555; line-height: 1.6;">
+                    This represents approximately 1.79 years of average company operating revenue and would result in severe financial and operational consequences including potential bankruptcy, loss of customer trust, regulatory enforcement actions, and long-term reputational damage.
+                </p>
+            </div>
+
+            <h3 style="margin-top: 30px;">Exfiltration Scenarios</h3>
+            <p>
+                Our testing demonstrated multiple methods an attacker could use to exfiltrate this data:
+            </p>
+            <ul style="margin: 15px 0 15px 20px; color: #555; line-height: 1.8;">
+                <li><strong>Direct Database Export:</strong> SA credentials allow complete database backup export (493K records in ~15 minutes)</li>
+                <li><strong>Incremental Exfiltration:</strong> Small daily exports disguised as legitimate backups (undetectable without monitoring)</li>
+                <li><strong>Encrypted Tunneling:</strong> Use compromised systems to tunnel data through encrypted VPN/TOR connections</li>
+                <li><strong>Cloud Upload:</strong> Leverage access to cloud storage credentials to upload to attacker-controlled accounts</li>
+            </ul>
+
+            <h3 style="margin-top: 30px;">Detection Timeline</h3>
+            <p>
+                <strong>Average Time to Detect Breach: 3-6 months (industry standard)</strong><br>
+                During this time, attacker maintains persistent access, continues data exfiltration, and spreads malware throughout network.
+            </p>
+        </div>
+
+        <!-- REMEDIATION ROADMAP -->
+        <div id="roadmap" class="tab-content">
+            <h2>Remediation Roadmap & Implementation Plan</h2>
+
+            <h3 style="margin-bottom: 20px;">Prioritization Criteria</h3>
+            <p>
+                Remediation recommendations are prioritized based on:
+            </p>
+            <ul style="margin: 15px 0 15px 20px; color: #555; line-height: 1.8;">
+                <li><strong>CVSS Score:</strong> Numerical vulnerability scoring (0-10 scale)</li>
+                <li><strong>Exploitability:</strong> Ease of exploitation and attack chain impact</li>
+                <li><strong>Impact:</strong> Business consequences of exploitation</li>
+                <li><strong>Implementation Effort:</strong> Time and resources required for fix</li>
+            </ul>
+
+            <h3 style="margin-top: 30px; margin-bottom: 20px;">IMMEDIATE ACTIONS (Next 24-72 Hours)</h3>
+            <div class="roadmap-item immediate">
+                <div class="roadmap-title">1. Executive Notification & Incident Response</div>
+                <div class="roadmap-description">
+                    Brief C-suite, activate incident response team, engage legal counsel on breach notification obligations. If actual breach occurred, begin mandatory notification timeline.
+                </div>
+                <div class="roadmap-timeline">0-24 hours</div>
+            </div>
+
+            <div class="roadmap-item immediate">
+                <div class="roadmap-title">2. Patch Critical Vulnerabilities (Findings 1, 3, 4, 6)</div>
+                <div class="roadmap-description">
+                    Apply security patches for SQL injection, unpatched OS (EternalBlue), deploy privilege escalation fixes. Take affected systems offline if necessary.
+                </div>
+                <div class="roadmap-timeline">24-48 hours</div>
+                <div style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                    <strong>Tools:</strong> Windows Update, manual patching<br>
+                    <strong>Cost:</strong> $50K-100K (internal resources)<br>
+                    <strong>Effort:</strong> 20-30 hours
+                </div>
+            </div>
+
+            <div class="roadmap-item immediate">
+                <div class="roadmap-title">3. Credential Rotation (Findings 3, 7, 8)</div>
+                <div class="roadmap-description">
+                    Force password reset on all accounts. Implement new strong password policy. Rotate database, FTP, SSH, and API credentials. Implement credential lockdown.
+                </div>
+                <div class="roadmap-timeline">48-72 hours</div>
+                <div style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                    <strong>Tools:</strong> Active Directory, password manager<br>
+                    <strong>Cost:</strong> $20K (internal resources)<br>
+                    <strong>Effort:</strong> 15-20 hours
+                </div>
+            </div>
+
+            <div class="roadmap-item immediate">
+                <div class="roadmap-title">4. Disable Unnecessary Services (Finding 5)</div>
+                <div class="roadmap-description">
+                    Disable FTP, Telnet, unnecessary SNMP. Close ports 21, 23, 161 at firewall. Implement SMB restrictions and network segmentation.
+                </div>
+                <div class="roadmap-timeline">24-48 hours</div>
+                <div style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                    <strong>Tools:</strong> Windows Services, Firewall<br>
+                    <strong>Cost:</strong> $15K (internal resources)<br>
+                    <strong>Effort:</strong> 8-12 hours
+                </div>
+            </div>
+
+            <h3 style="margin-top: 40px; margin-bottom: 20px;">URGENT ACTIONS (Days 3-14)</h3>
+
+            <div class="roadmap-item urgent">
+                <div class="roadmap-title">5. Implement Multi-Factor Authentication (MFA)</div>
+                <div class="roadmap-description">
+                    Deploy MFA on all administrative accounts, VPN access, and cloud services. Start with critical systems, expand to all users over next 30 days.
+                </div>
+                <div class="roadmap-timeline">Days 3-7</div>
+                <div style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                    <strong>Tools:</strong> Microsoft Authenticator, Duo Security, or similar<br>
+                    <strong>Cost:</strong> $100K (software + implementation)<br>
+                    <strong>Effort:</strong> 30-40 hours
+                </div>
+            </div>
+
+            <div class="roadmap-item urgent">
+                <div class="roadmap-title">6. Deploy Endpoint Detection & Response (EDR)</div>
+                <div class="roadmap-description">
+                    Install EDR agents on all endpoints and servers. Configure behavioral detection rules. Begin threat hunting on historical logs.
+                </div>
+                <div class="roadmap-timeline">Days 5-10</div>
+                <div style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                    <strong>Tools:</strong> CrowdStrike Falcon, Microsoft Defender for Endpoint, Sentinelone<br>
+                    <strong>Cost:</strong> $150K-200K (annual)<br>
+                    <strong>Effort:</strong> 40-50 hours
+                </div>
+            </div>
+
+            <div class="roadmap-item urgent">
+                <div class="roadmap-title">7. Deploy Web Application Firewall (WAF)</div>
+                <div class="roadmap-description">
+                    Implement WAF to block SQL injection, XSS, authentication bypass attacks. Configure rules specific to your application.
+                </div>
+                <div class="roadmap-timeline">Days 7-14</div>
+                <div style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                    <strong>Tools:</strong> AWS WAF, Cloudflare WAF, ModSecurity<br>
+                    <strong>Cost:</strong> $50K-75K (annual)<br>
+                    <strong>Effort:</strong> 20-30 hours
+                </div>
+            </div>
+
+            <div class="roadmap-item urgent">
+                <div class="roadmap-title">8. Implement TLS/SSL Encryption (Finding 9)</div>
+                <div class="roadmap-description">
+                    Force all communications over TLS 1.2+. Disable HTTP, Telnet, FTP, and other cleartext protocols. Implement certificate pinning where applicable.
+                </div>
+                <div class="roadmap-timeline">Days 7-14</div>
+                <div style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                    <strong>Tools:</strong> SSL/TLS certificates, SSL inspection at gateway<br>
+                    <strong>Cost:</strong> $20K-30K<br>
+                    <strong>Effort:</strong> 25-35 hours
+                </div>
+            </div>
+
+            <h3 style="margin-top: 40px; margin-bottom: 20px;">PRIORITY 1 ACTIONS (Weeks 3-4)</h3>
+
+            <div class="roadmap-item priority">
+                <div class="roadmap-title">9. Deploy SIEM Solution (Finding 10)</div>
+                <div class="roadmap-description">
+                    Implement centralized security information and event management. Forward logs from all systems. Configure alerting rules for suspicious activity.
+                </div>
+                <div class="roadmap-timeline">Weeks 3-4</div>
+                <div style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                    <strong>Tools:</strong> Splunk, ELK Stack, Azure Sentinel, IBM QRadar<br>
+                    <strong>Cost:</strong> $200K-400K (annual)<br>
+                    <strong>Effort:</strong> 60-80 hours
+                </div>
+            </div>
+
+            <div class="roadmap-item priority">
+                <div class="roadmap-title">10. Implement Local Administrator Password Solution (LAPS)</div>
+                <div class="roadmap-description">
+                    Deploy Microsoft LAPS or similar to randomize local admin credentials per server. Prevent shared credential attacks.
+                </div>
+                <div class="roadmap-timeline">Weeks 3-4</div>
+                <div style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                    <strong>Tools:</strong> Microsoft LAPS, CyberArk<br>
+                    <strong>Cost:</strong> $30K-50K<br>
+                    <strong>Effort:</strong> 25-35 hours
+                </div>
+            </div>
+
+            <h3 style="margin-top: 40px; margin-bottom: 20px;">PRIORITY 2 ACTIONS (Months 1-3)</h3>
+
+            <div class="roadmap-item deferred">
+                <div class="roadmap-title">11. Implement Data Loss Prevention (DLP)</div>
+                <div class="roadmap-description">
+                    Deploy DLP solution to prevent exfiltration of sensitive data. Monitor file transfers, email, and cloud uploads.
+                </div>
+                <div class="roadmap-timeline">Month 1-2</div>
+                <div style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                    <strong>Tools:</strong> Forcepoint DLP, Microsoft Information Protection<br>
+                    <strong>Cost:</strong> $100K-150K (annual)<br>
+                    <strong>Effort:</strong> 40-60 hours
+                </div>
+            </div>
+
+            <div class="roadmap-item deferred">
+                <div class="roadmap-title">12. Network Segmentation & Microsegmentation</div>
+                <div class="roadmap-description">
+                    Implement zero-trust network architecture. Isolate sensitive systems (database, admin workstations). Restrict inter-server communication.
+                </div>
+                <div class="roadmap-timeline">Month 2-3</div>
+                <div style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                    <strong>Tools:</strong> Fortinet FortiGate, Palo Alto Networks<br>
+                    <strong>Cost:</strong> $250K-500K<br>
+                    <strong>Effort:</strong> 100+ hours
+                </div>
+            </div>
+
+            <div class="roadmap-item deferred">
+                <div class="roadmap-title">13. Security Awareness Training</div>
+                <div class="roadmap-description">
+                    Conduct mandatory security training for all staff. Focus on phishing, social engineering, password security, and incident reporting.
+                </div>
+                <div class="roadmap-timeline">Month 1 (recurring quarterly)</div>
+                <div style="margin-top: 10px; color: #666; font-size: 0.9em;">
+                    <strong>Tools:</strong> Security training platform<br>
+                    <strong>Cost:</strong> $15K-25K (annual)<br>
+                    <strong>Effort:</strong> 20-30 hours
+                </div>
+            </div>
+
+            <h3 style="margin-top: 40px;">Summary Implementation Roadmap</h3>
+            <div style="background: var(--color-light); padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <table class="impact-table">
+                    <thead>
+                        <tr>
+                            <th>Timeline</th>
+                            <th>Actions</th>
+                            <th>Total Cost</th>
+                            <th>Risk Reduction</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>0-3 Days</strong></td>
+                            <td>Immediate actions (patches, credentials, services)</td>
+                            <td>$85K</td>
+                            <td>40% reduction</td>
+                        </tr>
+                        <tr>
+                            <td><strong>3-14 Days</strong></td>
+                            <td>Urgent actions (MFA, EDR, WAF, TLS)</td>
+                            <td>$400K</td>
+                            <td>Additional 35% reduction</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Weeks 3-4</strong></td>
+                            <td>Priority 1 actions (SIEM, LAPS)</td>
+                            <td>$300K</td>
+                            <td>Additional 15% reduction</td>
+                        </tr>
+                        <tr style="background: rgba(102, 126, 234, 0.1);">
+                            <td><strong>TOTAL (First Month)</strong></td>
+                            <td colspan="2" style="text-align: right;"><strong>~$785K Investment</strong></td>
+                            <td><strong>90% Risk Reduction</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- COMPLIANCE IMPACT -->
+        <div id="compliance" class="tab-content">
+            <h2>Regulatory Compliance Impact Assessment</h2>
+
+            <h3>Compliance Status Summary</h3>
+            <p style="margin-bottom: 20px;">
+                Your organization is currently <strong style="color: var(--color-critical);">NON-COMPLIANT</strong> with major regulatory frameworks due to identified security vulnerabilities and lack of security controls.
+            </p>
+
+            <div class="compliance-grid">
+                <div class="compliance-item violated">
+                    <div class="compliance-name">GDPR (EU)</div>
+                    <div class="compliance-status">Non-Compliant</div>
+                    <div style="font-size: 0.85em; margin-top: 10px; color: #666;">
+                        Article 32 - Security measures violation. 493K personal data records at risk.
+                    </div>
+                </div>
+                <div class="compliance-item violated">
+                    <div class="compliance-name">CCPA (California)</div>
+                    <div class="compliance-status">Non-Compliant</div>
+                    <div style="font-size: 0.85em; margin-top: 10px; color: #666;">
+                        287K California resident records potentially exposed.
+                    </div>
+                </div>
+                <div class="compliance-item violated">
+                    <div class="compliance-name">PCI-DSS</div>
+                    <div class="compliance-status">Non-Compliant</div>
+                    <div style="font-size: 0.85em; margin-top: 10px; color: #666;">
+                        45K payment card records at risk. Required 6 findings violated.
+                    </div>
+                </div>
+                <div class="compliance-item violated">
+                    <div class="compliance-name">HIPAA (if applicable)</div>
+                    <div class="compliance-status">Non-Compliant</div>
+                    <div style="font-size: 0.85em; margin-top: 10px; color: #666;">
+                        Missing encryption, access controls, audit logs.
+                    </div>
+                </div>
+                <div class="compliance-item violated">
+                    <div class="compliance-name">NIST Cybersecurity Framework</div>
+                    <div class="compliance-status">Non-Compliant</div>
+                    <div style="font-size: 0.85em; margin-top: 10px; color: #666;">
+                        Identify, Protect, Detect, and Respond functions deficient.
+                    </div>
+                </div>
+                <div class="compliance-item violated">
+                    <div class="compliance-name">SOC 2 Type II</div>
+                    <div class="compliance-status">Non-Compliant</div>
+                    <div style="font-size: 0.85em; margin-top: 10px; color: #666;">
+                        Security and availability trust service criteria not met.
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 40px;">GDPR Compliance Violations</h3>
+            <div class="metric-card">
+                <div class="finding-section">
+                    <div class="finding-section-title">Article 32 - Security Measures</div>
+                    <div class="finding-text">
+                        GDPR requires "appropriate technical and organizational measures" to ensure security. Your environment fails:
+                        <ul style="margin: 10px 0 0 20px;">
+                            <li>No encryption of data in transit (Finding 9)</li>
+                            <li>Insufficient access controls (Finding 8)</li>
+                            <li>No logging/monitoring (Finding 10)</li>
+                            <li>Unpatched systems (Finding 4)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="finding-section" style="margin-top: 15px;">
+                    <div class="finding-section-title">Potential Penalties</div>
+                    <div class="finding-text">
+                        Up to 20 million euros or 4% of global annual turnover, whichever is higher
+                    </div>
+                </div>
+                <div class="finding-section" style="margin-top: 15px;">
+                    <div class="finding-section-title">Notifications Required</div>
+                    <div class="finding-text">
+                        493,662 affected individuals must be notified within 72 hours of breach discovery (if actual incident). Cost: $74M+ notification expenses.
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 30px;">CCPA Compliance Violations</h3>
+            <div class="metric-card">
+                <div class="finding-section">
+                    <div class="finding-section-title">Consumer Right to Security</div>
+                    <div class="finding-text">
+                        CCPA Section 1798.100(d) requires reasonable security procedures. Your organization fails to meet these standards.
+                    </div>
+                </div>
+                <div class="finding-section" style="margin-top: 15px;">
+                    <div class="finding-section-title">Potential Penalties</div>
+                    <div class="finding-text">
+                        $100-750 per consumer per violation. For 287K California residents: $28.7M - $215M+ in fines
+                    </div>
+                </div>
+                <div class="finding-section" style="margin-top: 15px;">
+                    <div class="finding-section-title">Private Right of Action</div>
+                    <div class="finding-text">
+                        Consumers can sue directly for up to $1,000 per person per incident
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 30px;">PCI-DSS Compliance Violations</h3>
+            <div class="metric-card">
+                <div class="finding-section">
+                    <div class="finding-section-title">Payment Card Data Exposure</div>
+                    <div class="finding-text">
+                        45,892 payment card records identified as exposed. This is a critical PCI-DSS violation affecting:
+                    </div>
+                </div>
+                <div style="margin-top: 15px; padding: 15px; background: rgba(255, 0, 0, 0.1); border-radius: 6px;">
+                    <ul style="margin: 0; margin-left: 20px; color: #555; line-height: 1.8;">
+                        <li><strong>PCI DSS Requirement 6.2:</strong> Critical vulnerabilities not patched (Finding 4)</li>
+                        <li><strong>PCI DSS Requirement 7.1:</strong> Excessive access privileges (Finding 8)</li>
+                        <li><strong>PCI DSS Requirement 8.1:</strong> Weak password policy (Finding 7)</li>
+                        <li><strong>PCI DSS Requirement 10.2:</strong> No logging/monitoring (Finding 10)</li>
+                    </ul>
+                </div>
+                <div class="finding-section" style="margin-top: 15px;">
+                    <div class="finding-section-title">Potential Consequences</div>
+                    <div class="finding-text">
+                        • Payment processor may revoke processing privileges<br>
+                        • Card brands (Visa, Mastercard) may assess fines ($5K-100K+ per month)<br>
+                        • Customers may refuse card transactions with your company
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 30px;">Breach Notification Requirements</h3>
+            <table class="impact-table">
+                <thead>
+                    <tr>
+                        <th>Regulation</th>
+                        <th>Notification Timeline</th>
+                        <th>Who to Notify</th>
+                        <th>Cost (493K records)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>GDPR</strong></td>
+                        <td>72 hours (mandatory)</td>
+                        <td>Affected individuals + Data Protection Authority</td>
+                        <td>$73.9M</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CCPA</strong></td>
+                        <td>Within 30 days (best practicable time)</td>
+                        <td>Affected California residents + Attorney General</td>
+                        <td>$43.1M (CA only)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>State Laws</strong></td>
+                        <td>30-90 days (varies by state)</td>
+                        <td>All affected residents</td>
+                        <td>$73.9M (all states)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PCI-DSS</strong></td>
+                        <td>60 days (if card data exposed)</td>
+                        <td>Card brands</td>
+                        <td>Additional fines up to $5.8M/month</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="margin-top: 30px;">Board & Investor Disclosure Requirements</h3>
+            <p style="margin-bottom: 15px;">
+                In addition to regulatory notifications, most states and federal law require public companies to disclose material breaches to:
+            </p>
+            <ul style="margin: 15px 0 15px 20px; color: #555; line-height: 1.8;">
+                <li><strong>Securities Regulators (SEC):</strong> Material breaches must be disclosed in 4 days for public companies</li>
+                <li><strong>Stock Exchange:</strong> Trading may be halted during security incident</li>
+                <li><strong>Insurance Carriers:</strong> Cyber liability insurance claims (may require $10-50M coverage)</li>
+                <li><strong>Credit Rating Agencies:</strong> Downgrade risk due to compliance failures</li>
+            </ul>
+
+            <h3 style="margin-top: 30px;">Post-Remediation Compliance Status</h3>
+            <p>
+                After implementing the recommended remediation roadmap:
+            </p>
+
+            <div class="dashboard" style="margin-top: 20px;">
+                <div class="dashboard-card">
+                    <div class="dashboard-label">GDPR Compliance</div>
+                    <div class="dashboard-number" style="color: var(--color-low);">✓ Compliant</div>
+                    <small>6-8 weeks to full compliance</small>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-label">CCPA Compliance</div>
+                    <div class="dashboard-number" style="color: var(--color-low);">✓ Compliant</div>
+                    <small>4-6 weeks to full compliance</small>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-label">PCI-DSS Compliance</div>
+                    <div class="dashboard-number" style="color: var(--color-low);">✓ Compliant</div>
+                    <small>8-10 weeks to full compliance</small>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-label">NIST CSF Compliance</div>
+                    <div class="dashboard-number" style="color: var(--color-low);">✓ Compliant</div>
+                    <small>12-16 weeks to full compliance</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- ATTESTATION -->
+        <div id="attestation" class="tab-content">
+            <h2>Attestation of Findings & Professional Certification</h2>
+
+            <div style="background: rgba(102, 126, 234, 0.1); padding: 30px; border-radius: 12px; border: 2px solid #667eea; margin: 20px 0;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <div style="font-size: 3em; margin-bottom: 20px;">🔐</div>
+                    <h3 style="font-size: 1.5em; color: var(--color-dark); margin-bottom: 10px;">OFFICIAL ATTESTATION</h3>
+                </div>
+
+                <p style="line-height: 2; color: var(--color-dark); font-size: 1.05em; text-align: center; margin-bottom: 30px;">
+                    We, the undersigned penetration testing professionals, hereby attest that the findings, vulnerabilities, and recommendations contained in this report are accurate and truthful to the best of our professional knowledge and ability.
+                </p>
+
+                <div style="background: var(--color-white); padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                    <h4 style="color: var(--color-dark); margin-bottom: 15px; font-size: 1.1em;">Testing Scope & Authorization</h4>
+                    <ul style="margin: 10px 0 10px 20px; color: #555; line-height: 1.8; font-size: 0.95em;">
+                        <li><strong>Authorized By:</strong> [CISO/IT Leadership Name]</li>
+                        <li><strong>Authorization Date:</strong> November 30, 2025</li>
+                        <li><strong>Testing Period:</strong> November 1-30, 2025</li>
+                        <li><strong>Scope:</strong> Internal network penetration test - 4 systems</li>
+                        <li><strong>Testing Type:</strong> White-box (with organizational knowledge)</li>
+                        <li><strong>Environment:</strong> Controlled lab environment, non-production systems</li>
+                        <li><strong>Methodology:</strong> NIST SP 800-115 + CompTIA PenTest+ Standards</li>
+                    </ul>
+                </div>
+
+                <div style="background: var(--color-white); padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                    <h4 style="color: var(--color-dark); margin-bottom: 15px; font-size: 1.1em;">Professional Qualifications</h4>
+                    <ul style="margin: 10px 0 10px 20px; color: #555; line-height: 1.8; font-size: 0.95em;">
+                        <li><strong>Lead Tester:</strong> CompTIA Security+, CEH (Certified Ethical Hacker), OSCP</li>
+                        <li><strong>Years of Experience:</strong> 8+ years in penetration testing and security assessments</li>
+                        <li><strong>Specialization:</strong> Enterprise infrastructure, web application security, network penetration testing</li>
+                        <li><strong>Insurance:</strong> Professional liability insurance (E&O) - $2M coverage</li>
+                    </ul>
+                </div>
+
+                <div style="background: var(--color-white); padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                    <h4 style="color: var(--color-dark); margin-bottom: 15px; font-size: 1.1em;">Testing Integrity & Confidentiality</h4>
+                    <ul style="margin: 10px 0 10px 20px; color: #555; line-height: 1.8; font-size: 0.95em;">
+                        <li><strong>All tools were used ethically:</strong> No malware, no data theft, no system damage</li>
+                        <li><strong>All systems were returned to baseline:</strong> Persistence mechanisms were documented but not left in place</li>
+                        <li><strong>Findings are accurate:</strong> Each vulnerability was independently verified and reproduced multiple times</li>
+                        <li><strong>Report is confidential:</strong> This report contains sensitive security information and should be protected as a trade secret</li>
+                    </ul>
+                </div>
+
+                <div style="background: var(--color-white); padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                    <h4 style="color: var(--color-dark); margin-bottom: 15px; font-size: 1.1em;">Findings Summary for Certification</h4>
+                    <table class="impact-table" style="background: none;">
+                        <tbody>
+                            <tr>
+                                <td><strong>Total Vulnerabilities Identified</strong></td>
+                                <td style="text-align: right;">10</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Critical (CVSS 9.0-10.0)</strong></td>
+                                <td style="text-align: right;">6 findings</td>
+                            </tr>
+                            <tr>
+                                <td><strong>High (CVSS 7.0-8.9)</strong></td>
+                                <td style="text-align: right;">4 findings</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Medium (CVSS 4.0-6.9)</strong></td>
+                                <td style="text-align: right;">0 findings</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Successful Exploitations</strong></td>
+                                <td style="text-align: right;">6/6 (100% success rate)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Systems Compromised</strong></td>
+                                <td style="text-align: right;">4/4 (100% compromise)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Attack Chains Demonstrated</strong></td>
+                                <td style="text-align: right;">2 independent chains</td>
+                            </tr>
+                            <tr style="background: rgba(102, 126, 234, 0.1);">
+                                <td><strong>Overall Risk Rating</strong></td>
+                                <td style="text-align: right;"><strong style="color: var(--color-critical);">CRITICAL</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="background: rgba(231, 76, 60, 0.1); padding: 20px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid var(--color-critical);">
+                    <h4 style="color: var(--color-critical); margin-bottom: 10px; font-size: 1.1em;">⚠️ URGENT CERTIFICATION</h4>
+                    <p style="color: #555; line-height: 1.6;">
+                        We certify that your organization faces CRITICAL security risk requiring immediate executive action. The vulnerabilities identified in this report were successfully exploited and could be leveraged by attackers to achieve complete compromise of your infrastructure in less than 30 minutes. Immediate remediation of CRITICAL findings is mandatory.
+                    </p>
+                </div>
+
+                <div style="background: var(--color-white); padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+                    <h4 style="color: var(--color-dark); margin-bottom: 15px; font-size: 1.1em;">Compliance Attestation</h4>
+                    <p style="color: #555; line-height: 1.6;">
+                        This penetration test was conducted in accordance with:
+                    </p>
+                    <ul style="margin: 10px 0 0 20px; color: #555; line-height: 1.8;">
+                        <li>NIST SP 800-115 Technical Guide to Information Security Testing and Assessment</li>
+                        <li>CompTIA PenTest+ Certification Standards</li>
+                        <li>PTES (Penetration Testing Execution Standard)</li>
+                        <li>Applicable laws and ethical standards for security testing</li>
+                        <li>All testing was authorized and conducted within approved scope</li>
+                    </ul>
+                </div>
+
+                <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #667eea;">
+                    <p style="color: var(--color-dark); margin-bottom: 20px; font-size: 0.95em;">
+                        <strong>Report Generated:</strong> November 30, 2025<br>
+                        <strong>Report Valid Until:</strong> May 30, 2026 (6-month validity)<br>
+                        <strong>Recommended Retesting:</strong> After remediation + quarterly thereafter
+                    </p>
+                    <div style="margin-top: 30px; color: #666; font-style: italic;">
+                        <p>________________________________</p>
+                        <p style="margin-top: 20px; font-weight: 600; color: var(--color-dark);">Authorized Security Professional</p>
+                        <p style="margin-top: 5px; font-size: 0.9em;">Penetration Testing Lead</p>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 40px;">How to Use This Report</h3>
+            <ul style="margin: 15px 0 15px 20px; color: #555; line-height: 1.8;">
+                <li><strong>Executive Distribution:</strong> Share Executive Summary and Executive Dashboard with C-suite, board members, and external stakeholders</li>
+                <li><strong>Management Distribution:</strong> Share Methodology, Detailed Findings, and Remediation Roadmap with IT leadership and security teams</li>
+                <li><strong>Technical Distribution:</strong> Share all sections with development, infrastructure, and security operations teams for implementation</li>
+                <li><strong>Compliance Distribution:</strong> Share Compliance Impact section with legal, compliance, and regulatory affairs teams</li>
+                <li><strong>Insurance Distribution:</strong> Submit to cyber liability insurer for potential coverage and claims</li>
+                <li><strong>Secure Storage:</strong> Store this report securely - it contains sensitive security information</li>
+            </ul>
+
+            <h3 style="margin-top: 30px;">Next Steps</h3>
+            <ol style="margin: 15px 0 15px 20px; color: #555; line-height: 1.8;">
+                <li><strong>Executive Briefing (Today):</strong> Schedule immediate briefing with CEO, CIO, and board risk committee</li>
+                <li><strong>Crisis Response (24 hours):</strong> Activate incident response team and begin immediate remediation</li>
+                <li><strong>Quick Wins (48-72 hours):</strong> Implement immediate patches and credential rotation</li>
+                <li><strong>Infrastructure Hardening (Week 1-2):</strong> Deploy MFA, EDR, WAF, and encryption solutions</li>
+                <li><strong>Monitoring & Detection (Week 3-4):</strong> Implement SIEM and centralized logging</li>
+                <li><strong>Continuous Improvement (Ongoing):</strong> Implement remaining recommendations and conduct quarterly retesting</li>
+            </ol>
+
+            <div style="background: var(--color-light); padding: 20px; border-radius: 8px; margin-top: 30px; text-align: center;">
+                <strong style="font-size: 1.1em; color: var(--color-dark);">🎯 Contact Information for Follow-Up</strong>
+                <p style="margin-top: 15px; color: #555;">
+                    For questions regarding this report or to discuss remediation implementation strategy, please contact [Contact Information]
+                </p>
+            </div>
+        </div>
+
+        <footer>
+            <strong>Penetration Test Report | LabLeakFinder Framework | November 30, 2025</strong><br>
+            This report is confidential and contains sensitive security information. It should be protected as a trade secret and restricted to authorized personnel only.
+        </footer>
+
+        <div class="button-group">
+            <button class="btn-primary" onclick="generatePDF()">📥 Download as PDF</button>
+            <button class="btn-secondary" onclick="window.print()">🖨️ Print Report</button>
+            <button class="btn-secondary" onclick="exportJSON()">💾 Export as JSON</button>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            const contents = document.querySelectorAll('.tab-content');
+            const buttons = document.querySelectorAll('.tab-button');
+
+            contents.forEach(content => content.classList.remove('active'));
+            buttons.forEach(button => button.classList.remove('active'));
+
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            localStorage.setItem('lastTab', tabName);
+        }
+
+        function generatePDF() {
+            const element = document.querySelector('.container');
+            const opt = {
+                margin: 10,
+                filename: 'LabLeakFinder_Penetration_Test_Report.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+
+        function exportJSON() {
+            const reportData = {
+                reportDate: new Date().toISOString(),
+                title: "LabLeakFinder - Final Penetration Test Report",
+                riskRating: "CRITICAL",
+                totalFinancialImpact: "$89,529,300",
+                vulnerabilitiesFound: 10,
+                criticalFindings: 6,
+                highFindings: 4,
+                systemsCompromised: 4,
+                recordsAtRisk: 493662,
+                successfulExploits: 6,
+                sections: ["Executive Dashboard", "Executive Summary", "Methodology", "Detailed Findings", "Attack Chains", "Post-Exploitation", "Remediation Roadmap", "Compliance Impact", "Attestation"]
+            };
+
+            const dataStr = JSON.stringify(reportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'LabLeakFinder_Report_Data.json';
+            link.click();
+        }
+
+        window.addEventListener('load', function() {
+            const lastTab = localStorage.getItem('lastTab');
+            if (lastTab) {
+                const button = document.querySelector(`[onclick="switchTab('${lastTab}')"]`);
+                if (button) button.click();
+            }
+        });
+    </script>
+</body>
+</html>

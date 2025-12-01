@@ -1,0 +1,209 @@
+{
+  "report_generated": "2025-11-30T22:58:29.362015",
+  "total_findings": 10,
+  "summary": {
+    "total_findings": 10,
+    "by_severity": {
+      "HIGH": 1,
+      "CRITICAL": 5,
+      "MEDIUM": 1,
+      "LOW": 3
+    },
+    "by_exposure_type": {
+      "directory_listing": 1,
+      "backup_file": 2,
+      "config_file": 2,
+      "admin_panel": 1,
+      "debug_info": 1,
+      "version_disclosure": 3
+    },
+    "by_target_domain": {
+      "vulnerable.lab": 10
+    },
+    "critical_count": 5,
+    "high_count": 1,
+    "medium_count": 1
+  },
+  "findings": [
+    {
+      "finding_id": "FIND-0003",
+      "query_id": 3,
+      "target_domain": "vulnerable.lab",
+      "exposure_type": "config_file",
+      "vulnerability_title": "Configuration Files Exposed",
+      "description": "Configuration files containing credentials, database info, and API keys are accessible.",
+      "cve_references": [
+        "CVE-2021-9999",
+        "CWE-522"
+      ],
+      "cvss_score": 10.0,
+      "cvss_severity": "CRITICAL",
+      "status": "confirmed",
+      "evidence": "[33K] web.config containing database credentials\n[18K] settings.ini with API keys",
+      "remediation": "Move config files outside web root. Use environment variables for sensitive data. Implement .htaccess restrictions.",
+      "timestamp": "2025-11-30T22:58:29.349318"
+    },
+    {
+      "finding_id": "FIND-0009",
+      "query_id": 9,
+      "target_domain": "vulnerable.lab",
+      "exposure_type": "config_file",
+      "vulnerability_title": "Configuration Files Exposed",
+      "description": "Configuration files containing credentials, database info, and API keys are accessible.",
+      "cve_references": [
+        "CVE-2021-9999",
+        "CWE-522"
+      ],
+      "cvss_score": 10.0,
+      "cvss_severity": "CRITICAL",
+      "status": "confirmed",
+      "evidence": "[33K] web.config containing database credentials\n[18K] settings.ini with API keys",
+      "remediation": "Move config files outside web root. Use environment variables for sensitive data. Implement .htaccess restrictions.",
+      "timestamp": "2025-11-30T22:58:29.350295"
+    },
+    {
+      "finding_id": "FIND-0004",
+      "query_id": 4,
+      "target_domain": "vulnerable.lab",
+      "exposure_type": "admin_panel",
+      "vulnerability_title": "Administrative Interface Exposed",
+      "description": "Admin panels accessible without proper authentication or with default credentials.",
+      "cve_references": [
+        "CVE-2021-2222",
+        "CWE-269"
+      ],
+      "cvss_score": 9.600000000000001,
+      "cvss_severity": "CRITICAL",
+      "status": "confirmed",
+      "evidence": "Admin login panel at /admin/login.php\nDefault credentials: admin/admin detected as valid",
+      "remediation": "Require strong authentication. IP whitelist admin interfaces. Disable default accounts.",
+      "timestamp": "2025-11-30T22:58:29.349318"
+    },
+    {
+      "finding_id": "FIND-0002",
+      "query_id": 2,
+      "target_domain": "vulnerable.lab",
+      "exposure_type": "backup_file",
+      "vulnerability_title": "Backup Files Accessible",
+      "description": "Backup files (.bak, .backup, .old) are accessible via web, exposing sensitive code and configurations.",
+      "cve_references": [
+        "CVE-2020-5678",
+        "CWE-426"
+      ],
+      "cvss_score": 9.0,
+      "cvss_severity": "CRITICAL",
+      "status": "confirmed",
+      "evidence": "[22K] application.conf.bak\n[45K] database.config.old\n[12K] secrets.env~",
+      "remediation": "Remove backup files from web root. Use .gitignore and deployment scripts to prevent accidental inclusion.",
+      "timestamp": "2025-11-30T22:58:29.349318"
+    },
+    {
+      "finding_id": "FIND-0008",
+      "query_id": 8,
+      "target_domain": "vulnerable.lab",
+      "exposure_type": "backup_file",
+      "vulnerability_title": "Backup Files Accessible",
+      "description": "Backup files (.bak, .backup, .old) are accessible via web, exposing sensitive code and configurations.",
+      "cve_references": [
+        "CVE-2020-5678",
+        "CWE-426"
+      ],
+      "cvss_score": 9.0,
+      "cvss_severity": "CRITICAL",
+      "status": "confirmed",
+      "evidence": "[22K] application.conf.bak\n[45K] database.config.old\n[12K] secrets.env~",
+      "remediation": "Remove backup files from web root. Use .gitignore and deployment scripts to prevent accidental inclusion.",
+      "timestamp": "2025-11-30T22:58:29.350295"
+    },
+    {
+      "finding_id": "FIND-0001",
+      "query_id": 1,
+      "target_domain": "vulnerable.lab",
+      "exposure_type": "directory_listing",
+      "vulnerability_title": "Directory Listing Exposed",
+      "description": "Web server directory indexing is enabled, allowing attackers to browse file structure.",
+      "cve_references": [
+        "CVE-2019-1234",
+        "CWE-548"
+      ],
+      "cvss_score": 7.6000000000000005,
+      "cvss_severity": "HIGH",
+      "status": "confirmed",
+      "evidence": "Index of /uploads\n[DIR] configs/\n[DIR] backups/\n[-] backup_2024.sql",
+      "remediation": "Disable directory listing in web server configuration (Options -Indexes in Apache, remove default.aspx in IIS).",
+      "timestamp": "2025-11-30T22:58:29.349318"
+    },
+    {
+      "finding_id": "FIND-0005",
+      "query_id": 5,
+      "target_domain": "vulnerable.lab",
+      "exposure_type": "debug_info",
+      "vulnerability_title": "Debug Information Exposed",
+      "description": "Debug information, stack traces, and error messages reveal application internals and versions.",
+      "cve_references": [
+        "CVE-2020-1111",
+        "CWE-215"
+      ],
+      "cvss_score": 6.6000000000000005,
+      "cvss_severity": "MEDIUM",
+      "status": "confirmed",
+      "evidence": "Fatal error in /app/upload.php on line 45\nStack trace: [...]\nMySQL Error: Table 'users' not found",
+      "remediation": "Disable debug mode in production. Implement custom error pages. Configure proper logging.",
+      "timestamp": "2025-11-30T22:58:29.350295"
+    },
+    {
+      "finding_id": "FIND-0006",
+      "query_id": 6,
+      "target_domain": "vulnerable.lab",
+      "exposure_type": "version_disclosure",
+      "vulnerability_title": "Application Version Disclosed",
+      "description": "Application version numbers in banners, headers, or error messages allow targeted exploitation.",
+      "cve_references": [
+        "CVE-2019-0001",
+        "CWE-200"
+      ],
+      "cvss_score": 3.4000000000000004,
+      "cvss_severity": "LOW",
+      "status": "confirmed",
+      "evidence": "Server: Apache/2.4.41 (Ubuntu)\nX-Powered-By: PHP/7.4.3\nContent-Management-System: WordPress 5.8.1",
+      "remediation": "Remove version strings from HTTP headers. Customize server banners.",
+      "timestamp": "2025-11-30T22:58:29.350295"
+    },
+    {
+      "finding_id": "FIND-0007",
+      "query_id": 7,
+      "target_domain": "vulnerable.lab",
+      "exposure_type": "version_disclosure",
+      "vulnerability_title": "Application Version Disclosed",
+      "description": "Application version numbers in banners, headers, or error messages allow targeted exploitation.",
+      "cve_references": [
+        "CVE-2019-0001",
+        "CWE-200"
+      ],
+      "cvss_score": 3.4000000000000004,
+      "cvss_severity": "LOW",
+      "status": "confirmed",
+      "evidence": "Server: Apache/2.4.41 (Ubuntu)\nX-Powered-By: PHP/7.4.3\nContent-Management-System: WordPress 5.8.1",
+      "remediation": "Remove version strings from HTTP headers. Customize server banners.",
+      "timestamp": "2025-11-30T22:58:29.350295"
+    },
+    {
+      "finding_id": "FIND-0010",
+      "query_id": 10,
+      "target_domain": "vulnerable.lab",
+      "exposure_type": "version_disclosure",
+      "vulnerability_title": "Application Version Disclosed",
+      "description": "Application version numbers in banners, headers, or error messages allow targeted exploitation.",
+      "cve_references": [
+        "CVE-2019-0001",
+        "CWE-200"
+      ],
+      "cvss_score": 3.4000000000000004,
+      "cvss_severity": "LOW",
+      "status": "confirmed",
+      "evidence": "Server: Apache/2.4.41 (Ubuntu)\nX-Powered-By: PHP/7.4.3\nContent-Management-System: WordPress 5.8.1",
+      "remediation": "Remove version strings from HTTP headers. Customize server banners.",
+      "timestamp": "2025-11-30T22:58:29.351271"
+    }
+  ]
+}
